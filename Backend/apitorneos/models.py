@@ -2,7 +2,7 @@ from django.db import models
 from rest_framework import serializers
 
 class Participante(models.Model):
-    id_participante = models.IntegerField(primary_key=True, db_column='ID_Participante')
+    ID_participante = models.AutoField(primary_key=True)
     nombre_estudiante = models.CharField(max_length=50, db_column='Nombre_Estudiante')
     apellido_estudiante = models.CharField(max_length=50, db_column='Apellido_Estudiante')
     carrera_estudiante = models.CharField(max_length=100, db_column='Carrera_Estudiante')
