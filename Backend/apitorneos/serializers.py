@@ -1,7 +1,8 @@
 from rest_framework import serializers
 from .models import (Participante,Torneo, ConfiguracionTorneo, Grupo, Equipo, GrupoEquipo,
                      Jornada, Calendario, ParticipanteEquipo, Partido, Resultado,
-                     ParticipantePartido, Coach, Canchas, PartidoCancha, Arbitro, ArbitroPartido, Sancion)
+                     ParticipantePartido, Coach, Canchas, PartidoCancha, Arbitro, ArbitroPartido, Sancion, TablaPosiciones,
+                     HistorialSuspension)
 
 
 class ParticipanteSerializer(serializers.ModelSerializer):
@@ -108,4 +109,14 @@ class ArbitroPartidoSerializer(serializers.ModelSerializer):
 class SancionSerializer(serializers.ModelSerializer):
     class Meta:
         model = Sancion
+        fields = '__all__'
+
+class TablaposicionesSerializer(serializers.ModelSerializer):
+    class Meta: 
+        model = TablaPosiciones
+        fields = '__all__'
+
+class HistorialSuspensionSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = HistorialSuspension
         fields = '__all__'

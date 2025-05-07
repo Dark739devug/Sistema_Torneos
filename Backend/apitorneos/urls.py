@@ -1,22 +1,34 @@
 from rest_framework.routers import DefaultRouter  # Corregir la importación
-from .views import ParticipanteViewSet  # Asegúrate de que la vista está correctamente importada
-
-
 from .views import (
-    TorneoViewSet, ConfiguracionTorneoViewSet,
-    GrupoViewSet, EquipoViewSet, GrupoEquipoViewSet, JornadaViewSet,
-    CalendarioViewSet, ParticipanteEquipoViewSet, PartidoViewSet,
-    ResultadoViewSet, ParticipantePartidoViewSet, CoachViewSet,
-    CanchasViewSet, PartidoCanchaViewSet, ArbitroViewSet,
-    ArbitroPartidoViewSet, SancionViewSet
-)
+    ParticipanteViewSet,
+    TorneoViewSet,
+    ConfiguracionTorneoViewSet,
+    GrupoViewSet,
+    EquipoViewSet,
+    GrupoEquipoViewSet,
+    JornadaViewSet,
+    CalendarioViewSet,
+    ParticipanteEquipoViewSet,
+    PartidoViewSet,
+    ResultadoViewSet,
+    ParticipantePartidoViewSet,
+    CoachViewSet,
+    CanchasViewSet,
+    PartidoCanchaViewSet,
+    ArbitroViewSet,
+    ArbitroPartidoViewSet,
+    SancionViewSet,
+    TablaposicionesViewSet,
+    HistorialSuspensionViewset
+)  # Asegúrate de que la vista está correctamente importada
+
 # Crear una instancia del router
 router = DefaultRouter()
 
 # Registrar el 'ParticipanteViewSet' con la ruta correcta
 router.register('apitorneos', ParticipanteViewSet, basename='participante')  # Corregir la ruta
-
-router.register('torneos', TorneoViewSet, basename='torneo')
+#cambios hechos por aracely
+router.register('torneos',  TorneoViewSet, basename='torneo')
 router.register('configuraciones-torneo', ConfiguracionTorneoViewSet, basename='configuraciontorneo')
 router.register('grupos', GrupoViewSet, basename='grupo')
 router.register('equipos', EquipoViewSet, basename='equipo')
@@ -33,5 +45,9 @@ router.register('partido-canchas', PartidoCanchaViewSet, basename='partidocancha
 router.register('arbitros', ArbitroViewSet, basename='arbitro')
 router.register('arbitro-partidos', ArbitroPartidoViewSet, basename='arbitropartido')
 router.register('sanciones', SancionViewSet, basename='sancion')
+router.register('tablaposiciones', TablaposicionesViewSet, basename='tablaposiciones' )
+router.register('historialsuspension', HistorialSuspensionViewset, basename='historialsuspension')
+
 # Asignar las URLs generadas a urlpatterns
 urlpatterns = router.urls
+

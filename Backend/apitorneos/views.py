@@ -2,10 +2,18 @@ from rest_framework import viewsets, permissions
 from .models import (Participante, Torneo, ConfiguracionTorneo, Grupo, Equipo,
     GrupoEquipo, Jornada, Calendario, ParticipanteEquipo, Partido,
     Resultado, ParticipantePartido, Coach, Canchas, PartidoCancha,
-    Arbitro, ArbitroPartido, Sancion
+    Arbitro, ArbitroPartido, Sancion, TablaPosiciones, HistorialSuspension
 )
-from .serializers import (ParticipanteSerializer, TorneoSerializer, ConfiguracionTorneoSerializer, GrupoSerializer, EquipoSerializer, GrupoEquipoSerializer,JornadaSerializer, CalendarioSerializer, ParticipanteEquipoSerializer, PartidoCanchaSerializer, PartidoSerializer, ResultadoSerializer, ParticipantePartidoSerializer, CoachSerializer, CanchasSerializer, ArbitroPartidoSerializer, ArbitroSerializer, SancionSerializer
-)
+from .serializers import (ParticipanteSerializer, TorneoSerializer,
+                          ConfiguracionTorneoSerializer, GrupoSerializer, EquipoSerializer, GrupoEquipoSerializer,
+                          JornadaSerializer, CalendarioSerializer, 
+                          ParticipanteEquipoSerializer, PartidoCanchaSerializer,
+                          PartidoSerializer, ResultadoSerializer, 
+                          ParticipantePartidoSerializer, CoachSerializer,
+                          CanchasSerializer, ArbitroPartidoSerializer, 
+                          ArbitroSerializer, SancionSerializer, 
+                          TablaposicionesSerializer, HistorialSuspensionSerializer)
+
 class ParticipanteViewSet(viewsets.ModelViewSet):
     queryset = Participante.objects.all()
     permission_classes = [permissions.AllowAny]
@@ -95,3 +103,14 @@ class SancionViewSet(viewsets.ModelViewSet):
     queryset = Sancion.objects.all()
     permission_classes = [permissions.AllowAny]
     serializer_class = SancionSerializer
+
+class TablaposicionesViewSet(viewsets.ModelViewSet):
+    queryset = TablaPosiciones.objects.all()
+    serializer_class = TablaposicionesSerializer
+
+class HistorialSuspensionViewset(viewsets.ModelViewSet):
+    queryset = HistorialSuspension.objects.all()
+    serializer_class = HistorialSuspensionSerializer
+
+
+
