@@ -3,45 +3,114 @@
 @tailwind utilities;
 
 
-html,
-body {
-  height: 100%;
-  margin: 0;
-  display: flex;
-  flex-direction: column;
-}
+/* globals.css */
 
-body {
- background-image: url('/soccer-5506110_1920.jpg');
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
-  background-size: cover;
-  background-position: center;
-  background-repeat: no-repeat;
-  height: 100vh;
-  width: 100vw;
+/* Estilo global */
+* {
   margin: 0;
   padding: 0;
-;
+  box-sizing: border-box;
 }
 
-.contenido {
-  flex: 1;
-}
-.layout {
+body {
+  font-family: 'Geist Sans', sans-serif;
+  background-image: url('/soccer-5506110_1920.jpg'); /* Ruta a la imagen de fondo */
+  background-size: cover;  /* La imagen cubre toda la pantalla */
+  background-position: center center; /* Asegura que la imagen esté centrada */
+  background-attachment: fixed; /* Hace que la imagen de fondo no se desplace al hacer scroll */
+  min-height: 100vh; /* Garantiza que el contenido ocupe al menos toda la altura de la ventana */
   display: flex;
   flex-direction: column;
-  min-height: 100vh;
+
 }
 
 main {
-  flex: 1; /* Esto asegura que el contenido principal ocupe el espacio restante */
+  flex-grow: 1;
+  padding-top: 60px; /* Añade espacio para el navbar fijo */
+}
+a {
+  text-decoration: none;
+  color: inherit;
 }
 
+button {
+  border: none;
+  cursor: pointer;
+}
+
+/* 🔹 Estilo para el Navbar */
+.navbar {
+  background-color: rgba(0, 0, 0, 0.5);  /* Fondo semi-transparente */
+  color: white;
+  padding: 10px 0;
+  position: fixed;
+  width: 100%;
+  z-index: 1000;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.15);
+}
+
+.navbar-container {
+  max-width: 1200px;
+  margin: 0 auto;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0 20px;
+}
+
+.navbar-links {
+  display: flex;
+  gap: 20px;
+}
+
+.navbar-links a {
+  color: #ccc;
+  padding: 8px 16px;
+  border-radius: 5px;
+  transition: background-color 0.3s;
+}
+
+.navbar-links a:hover {
+  background-color: #333;
+  color: white;
+}
+
+.auth-buttons {
+  display: flex;
+  gap: 10px;
+}
+
+.auth-buttons button {
+  padding: 8px 16px;
+  border-radius: 5px;
+  font-weight: bold;
+  transition: background-color 0.3s;
+}
+
+.auth-buttons .register-btn {
+  background-color: #007bff;
+  color: white;
+}
+
+.auth-buttons .register-btn:hover {
+  background-color: #0069d9;
+}
+
+.auth-buttons .login-btn {
+  background-color: #28a745;
+  color: white;
+}
+
+.auth-buttons .login-btn:hover {
+  background-color: #218838;
+}
+
+/* 🔹 Footer al fondo */
 footer {
-  margin-top: auto;
-  padding: 1rem;
-  background-color: rgba(0, 0, 0, 0.5);
+  margin-top: auto; /* Empuja el footer hacia abajo */
+  padding: 20px;
+  background-color: #333;
   color: white;
   text-align: center;
+  width: 100%;
 }

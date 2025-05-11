@@ -1,6 +1,7 @@
 from django.db import models
 from rest_framework import serializers
 
+
 class Participante(models.Model):
     ID_participante = models.AutoField(primary_key=True)
     nombre_estudiante = models.CharField(max_length=50, db_column='Nombre_Estudiante')
@@ -209,13 +210,14 @@ class Arbitro(models.Model):
 
 
 class ArbitroPartido(models.Model):
+    id = models.AutoField(primary_key=True)  # Campo añadido
     id_arbitro = models.ForeignKey(Arbitro, on_delete=models.CASCADE, db_column='ID_Arbitro')
     id_partido = models.ForeignKey(Partido, on_delete=models.CASCADE, db_column='ID_Partido')
-
+    
     class Meta:
-        managed = False
         db_table = 'Arbitro_Partido'
         unique_together = (('id_arbitro', 'id_partido'),)
+
 
 class Sancion(models.Model):
     ID_Sancion = models.AutoField(primary_key=True, db_column='ID_Sancion')
@@ -389,13 +391,10 @@ class Goleador(models.Model):
         managed = False
         db_table = 'goleador'
 
-
 class Login(models.Model):
-    id_login = models.AutoField(db_column='ID_Login', primary_key=True)  # Field name made lowercase.
-    nombre_usuario = models.CharField(db_column='Nombre_Usuario', max_length=50, db_collation='utf8mb3_general_ci', blank=True, null=True)  # Field name made lowercase.
-    contraseña_hash = models.CharField(db_column='Contrase±a_Hash', max_length=255, db_collation='utf8mb3_general_ci', blank=True, null=True)  # Field name made lowercase.
-    tipo_usuario = models.CharField(db_column='Tipo_Usuario', max_length=50, db_collation='utf8mb3_general_ci', blank=True, null=True)  # Field name made lowercase.
+    username = models.CharField(max_length=150)  # Cambiar unique a False
+    email = models.EmailField(unique=True)  # El email sigue siendo único
+    password = models.CharField(max_length=128)
 
     class Meta:
-        managed = False
-        db_table = 'login'
+        db_table = 'Login'

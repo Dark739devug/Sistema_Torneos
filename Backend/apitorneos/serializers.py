@@ -2,8 +2,35 @@ from rest_framework import serializers
 from .models import (Participante,Torneo, ConfiguracionTorneo, Grupo, Equipo, GrupoEquipo,
                      Jornada, Calendario, ParticipanteEquipo, Partido, Resultado,
                      ParticipantePartido, Coach, Canchas, PartidoCancha, Arbitro, ArbitroPartido, Sancion, TablaPosiciones,
-                     HistorialSuspension)
+                     HistorialSuspension, Login)
 
+from django.contrib.auth.password_validation import validate_password
+from django.contrib.auth.hashers import make_password
+
+class RegisterSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Login
+        fields = ['username', 'email', 'password']
+        extra_kwargs = {'password': {'write_only': True}}
+
+    def validate_password(self, value):
+        validate_password(value)  # Validar fortaleza de contraseña
+        return value
+
+    def validate(self, data):
+        # Validar unicidad solo para el email, no para el username
+        if Login.objects.filter(email=data['email']).exists():
+            raise serializers.ValidationError({'email': 'Ya existe este email'})
+        return data
+
+    def create(self, validated_data):
+        validated_data['password'] = make_password(validated_data['password'])
+        return super().create(validated_data)
+
+class LoginSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Login
+        fields = ['email', 'password']
 
 class ParticipanteSerializer(serializers.ModelSerializer):
     class Meta:
@@ -120,3 +147,6 @@ class HistorialSuspensionSerializer(serializers.ModelSerializer):
     class Meta:
         model = HistorialSuspension
         fields = '__all__'
+
+
+

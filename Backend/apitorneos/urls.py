@@ -1,4 +1,6 @@
 from rest_framework.routers import DefaultRouter  # Corregir la importación
+from django.urls import path
+from django.urls import include
 from .views import (
     ParticipanteViewSet,
     TorneoViewSet,
@@ -19,15 +21,17 @@ from .views import (
     ArbitroPartidoViewSet,
     SancionViewSet,
     TablaposicionesViewSet,
-    HistorialSuspensionViewset
-)  # Asegúrate de que la vista está correctamente importada
+    HistorialSuspensionViewset,
+    RegisterView, LoginView,
 
+)  
+# Asegúrate de que la vista está correctamente importada
 # Crear una instancia del router
 router = DefaultRouter()
 
 # Registrar el 'ParticipanteViewSet' con la ruta correcta
 router.register('apitorneos', ParticipanteViewSet, basename='participante')  # Corregir la ruta
-#cambios hechos por aracely
+
 router.register('torneos',  TorneoViewSet, basename='torneo')
 router.register('configuraciones-torneo', ConfiguracionTorneoViewSet, basename='configuraciontorneo')
 router.register('grupos', GrupoViewSet, basename='grupo')
@@ -49,5 +53,8 @@ router.register('tablaposiciones', TablaposicionesViewSet, basename='tablaposici
 router.register('historialsuspension', HistorialSuspensionViewset, basename='historialsuspension')
 
 # Asignar las URLs generadas a urlpatterns
-urlpatterns = router.urls
-
+urlpatterns = [
+    path('', include(router.urls)),
+    path('register/', RegisterView.as_view(), name='register'),
+    path('login/', LoginView.as_view(), name='login'),
+    ]

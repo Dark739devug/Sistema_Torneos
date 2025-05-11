@@ -2,8 +2,8 @@ from rest_framework import viewsets, permissions
 from .models import (Participante, Torneo, ConfiguracionTorneo, Grupo, Equipo,
     GrupoEquipo, Jornada, Calendario, ParticipanteEquipo, Partido,
     Resultado, ParticipantePartido, Coach, Canchas, PartidoCancha,
-    Arbitro, ArbitroPartido, Sancion, TablaPosiciones, HistorialSuspension
-)
+    Arbitro, ArbitroPartido, Sancion, TablaPosiciones, HistorialSuspension, Login)
+
 from .serializers import (ParticipanteSerializer, TorneoSerializer,
                           ConfiguracionTorneoSerializer, GrupoSerializer, EquipoSerializer, GrupoEquipoSerializer,
                           JornadaSerializer, CalendarioSerializer, 
@@ -12,7 +12,62 @@ from .serializers import (ParticipanteSerializer, TorneoSerializer,
                           ParticipantePartidoSerializer, CoachSerializer,
                           CanchasSerializer, ArbitroPartidoSerializer, 
                           ArbitroSerializer, SancionSerializer, 
-                          TablaposicionesSerializer, HistorialSuspensionSerializer)
+                          TablaposicionesSerializer, HistorialSuspensionSerializer, RegisterSerializer,LoginSerializer )
+
+
+from rest_framework.views import APIView
+from rest_framework.response import Response
+from rest_framework import status
+from rest_framework_simplejwt.tokens import RefreshToken
+from django.contrib.auth.hashers import check_password
+
+class RegisterView(APIView):
+    permission_classes = []  # Permitir acceso sin autenticación
+
+    def post(self, request):
+        serializer = RegisterSerializer(data=request.data)
+        if serializer.is_valid():
+            serializer.save()  # Guarda el usuario con contraseña hasheada
+            return Response({
+                'message': 'Usuario registrado exitosamente',
+                'user': {
+                    'username': serializer.data.get('username'),
+                    'email': serializer.data.get('email')
+                }
+            }, status=status.HTTP_201_CREATED)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+class LoginView(APIView):
+    permission_classes = []  # Permitir acceso sin autenticación
+
+    def post(self, request):
+        serializer = LoginSerializer(data=request.data)
+        if not serializer.is_valid():
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+        try:
+            # Buscar al usuario por email
+            user = Login.objects.get(email=serializer.validated_data['email'])
+            # Verificar la contraseña
+            if not check_password(serializer.validated_data['password'], user.password):
+                raise Login.DoesNotExist  # Lanzar error si la contraseña no coincide
+        except Login.DoesNotExist:
+            return Response(
+                {'error': 'Correo electrónico o contraseña incorrectos'},
+                status=status.HTTP_401_UNAUTHORIZED
+            )
+
+        # Generar tokens JWT
+        refresh = RefreshToken.for_user(user)
+        return Response({
+            'access': str(refresh.access_token),
+            'refresh': str(refresh),
+            'user': {
+                'username': user.username,
+                'email': user.email
+            }
+        }, status=status.HTTP_200_OK)
+    
 
 class ParticipanteViewSet(viewsets.ModelViewSet):
     queryset = Participante.objects.all()
@@ -108,8 +163,10 @@ class TablaposicionesViewSet(viewsets.ModelViewSet):
     queryset = TablaPosiciones.objects.all()
     serializer_class = TablaposicionesSerializer
 
+
 class HistorialSuspensionViewset(viewsets.ModelViewSet):
     queryset = HistorialSuspension.objects.all()
+    permission_classes = [permissions.AllowAny]   # Faltaba esto
     serializer_class = HistorialSuspensionSerializer
 
 

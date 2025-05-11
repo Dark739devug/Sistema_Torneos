@@ -1,9 +1,35 @@
+"use client";
+import Link from "next/link";
+import React from "react";
+
 
 const Navbar = () => {
   return (
-    <nav style={{ background: '#333', color: '#fff', padding: '1rem' }}>
-     <ul> Registrarse </ul>
-     <ul> Iniciar sesión </ul>
+    <nav className="navbar">
+      <div className="navbar-container">
+        <Link href="/" className="text-white text-xl font-bold">
+          Mi Aplicación
+        </Link>
+        <div className="navbar-links">
+          <Link href="/" className="nav-link">
+            Inicio
+          </Link>
+          <Link href="/about" className="nav-link">
+            Acerca de
+          </Link>
+          <Link href="/contact" className="nav-link">
+            Contacto
+          </Link>
+        </div>
+        <div className="auth-buttons">
+          <Link href="/register">
+            <button className="register-btn">Registrarse</button>
+          </Link>
+          <Link href="/login">
+            <button className="login-btn">Iniciar Sesión</button>
+          </Link>
+        </div>
+      </div>
     </nav>
   );
 };
