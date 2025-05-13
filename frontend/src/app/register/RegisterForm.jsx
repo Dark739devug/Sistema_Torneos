@@ -44,6 +44,13 @@ export default function RegisterForm() {
 
   return (
     <form onSubmit={handleSubmit} className={styles.formContainer}>
+           <img
+        src="/logo2.png"
+        alt="Logo de la página"
+        className={styles.logo} 
+         // Puedes usar una clase CSS para ajustarla
+      />
+      <h2 className={styles.title}>Registro</h2>
       <input
         type="text"
         name="username"

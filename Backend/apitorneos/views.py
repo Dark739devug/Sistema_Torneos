@@ -2,7 +2,7 @@ from rest_framework import viewsets, permissions
 from .models import (Participante, Torneo, ConfiguracionTorneo, Grupo, Equipo,
     GrupoEquipo, Jornada, Calendario, ParticipanteEquipo, Partido,
     Resultado, ParticipantePartido, Coach, Canchas, PartidoCancha,
-    Arbitro, ArbitroPartido, Sancion, TablaPosiciones, HistorialSuspension, Login)
+    Arbitro, ArbitroPartido, Sancion, TablaPosiciones, HistorialSuspension)
 
 from .serializers import (ParticipanteSerializer, TorneoSerializer,
                           ConfiguracionTorneoSerializer, GrupoSerializer, EquipoSerializer, GrupoEquipoSerializer,
@@ -12,62 +12,37 @@ from .serializers import (ParticipanteSerializer, TorneoSerializer,
                           ParticipantePartidoSerializer, CoachSerializer,
                           CanchasSerializer, ArbitroPartidoSerializer, 
                           ArbitroSerializer, SancionSerializer, 
-                          TablaposicionesSerializer, HistorialSuspensionSerializer, RegisterSerializer,LoginSerializer )
+                          TablaposicionesSerializer, HistorialSuspensionSerializer, RegisterSerializer, LoginSerializer) 
 
-
-from rest_framework.views import APIView
+from rest_framework import status, generics
 from rest_framework.response import Response
-from rest_framework import status
-from rest_framework_simplejwt.tokens import RefreshToken
-from django.contrib.auth.hashers import check_password
+from django.contrib.auth import login
 
-class RegisterView(APIView):
-    permission_classes = []  # Permitir acceso sin autenticación
 
-    def post(self, request):
-        serializer = RegisterSerializer(data=request.data)
+class RegisterView(generics.CreateAPIView):
+    serializer_class = RegisterSerializer
+
+    def post(self, request, *args, **kwargs):
+        serializer = self.get_serializer(data=request.data)
         if serializer.is_valid():
-            serializer.save()  # Guarda el usuario con contraseña hasheada
-            return Response({
-                'message': 'Usuario registrado exitosamente',
-                'user': {
-                    'username': serializer.data.get('username'),
-                    'email': serializer.data.get('email')
-                }
-            }, status=status.HTTP_201_CREATED)
+            user = serializer.save()
+            return Response({"message": "Usuario registrado correctamente"}, status=status.HTTP_201_CREATED)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+    
+
+class LoginView(generics.GenericAPIView):
+    serializer_class = LoginSerializer
+
+    def post(self, request, *args, **kwargs):
+        serializer = self.get_serializer(data=request.data)
+        if serializer.is_valid():
+            user = serializer.validated_data['user']
+            login(request, user)
+            return Response({"message": "Inicio de sesión exitoso"}, status=status.HTTP_200_OK)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
-class LoginView(APIView):
-    permission_classes = []  # Permitir acceso sin autenticación
 
-    def post(self, request):
-        serializer = LoginSerializer(data=request.data)
-        if not serializer.is_valid():
-            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
-        try:
-            # Buscar al usuario por email
-            user = Login.objects.get(email=serializer.validated_data['email'])
-            # Verificar la contraseña
-            if not check_password(serializer.validated_data['password'], user.password):
-                raise Login.DoesNotExist  # Lanzar error si la contraseña no coincide
-        except Login.DoesNotExist:
-            return Response(
-                {'error': 'Correo electrónico o contraseña incorrectos'},
-                status=status.HTTP_401_UNAUTHORIZED
-            )
-
-        # Generar tokens JWT
-        refresh = RefreshToken.for_user(user)
-        return Response({
-            'access': str(refresh.access_token),
-            'refresh': str(refresh),
-            'user': {
-                'username': user.username,
-                'email': user.email
-            }
-        }, status=status.HTTP_200_OK)
-    
 
 class ParticipanteViewSet(viewsets.ModelViewSet):
     queryset = Participante.objects.all()

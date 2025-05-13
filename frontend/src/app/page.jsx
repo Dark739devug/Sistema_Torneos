@@ -4,8 +4,15 @@ export default function Homepage() {
   return (
     <div>
       <main className="p-4">
-        <h1>Bienvenido a Madera Mística</h1>
-        <p>Calidad y arte en cada pieza de madera.</p>
+      <img 
+          src="Futbol.png" 
+          alt="Hombre jugando al fútbol" 
+          className="max-w-full h-auto" 
+          style={{ maxWidth: '20%', height: 'auto' }}
+        />
+        
+     
+     
       </main>
     </div>
   );

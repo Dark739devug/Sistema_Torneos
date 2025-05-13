@@ -1,15 +1,24 @@
 "use client";
 import Link from "next/link";
 import React from "react";
+import { Germania_One } from 'next/font/google';
+
+const germania = Germania_One({
+  weight: '400',
+  subsets: ['latin'],
+  
+});
+
 
 
 const Navbar = () => {
   return (
     <nav className="navbar">
       <div className="navbar-container">
-        <Link href="/" className="text-white text-xl font-bold">
-          Mi Aplicación
-        </Link>
+       <span className={`${germania.className} text-white text-6xl ml-2`}>
+  LigaPro
+</span>
+
         <div className="navbar-links">
           <Link href="/" className="nav-link">
             Inicio

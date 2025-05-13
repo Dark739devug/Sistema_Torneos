@@ -171,7 +171,12 @@ SIMPLE_JWT = {
 }
 
 # Custom User Model (opcional)
-# AUTH_USER_MODEL = 'tu_app.CustomUser'
+AUTH_USER_MODEL = 'apitorneos.CustomUser'
+
+AUTHENTICATION_BACKENDS = (
+    'django.contrib.auth.backends.ModelBackend', 
+)
+
 
 # Email settings (para recuperación de contraseña)
 EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'

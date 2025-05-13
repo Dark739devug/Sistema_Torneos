@@ -21,8 +21,7 @@ from .views import (
     ArbitroPartidoViewSet,
     SancionViewSet,
     TablaposicionesViewSet,
-    HistorialSuspensionViewset,
-    RegisterView, LoginView,
+    HistorialSuspensionViewset,LoginView, RegisterView
 
 )  
 # Asegúrate de que la vista está correctamente importada
