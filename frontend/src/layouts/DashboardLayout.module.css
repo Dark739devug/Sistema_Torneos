@@ -1,0 +1,12 @@
+.dashboardContainer {
+  display: flex;
+  height: calc(100vh - 70px); 
+  margin-top: 30px; 
+}
+
+.dashboardContent {
+  flex: 1;
+  padding: 2rem;
+  background-color: #f4f4f4;
+  overflow-y: auto;
+}

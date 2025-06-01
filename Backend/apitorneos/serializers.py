@@ -1,154 +1,111 @@
+
+from .models import (Usuario, Torneo,AvanceFase, Grupo, Jornada, Calendario, Horario,
+                    CalendarioHorario, Equipo, Cancha, Partido,
+                    Inscripcion, Participante, Tarjeta, HistorialSuspension,
+                        Resultado, Goleador, TablaPosiciones, HistorialCambiosResultado
+                    )
+                     
 from rest_framework import serializers
-from .models import (Participante,Torneo, ConfiguracionTorneo, Grupo, Equipo, GrupoEquipo,
-                     Jornada, Calendario, ParticipanteEquipo, Partido, Resultado,
-                     ParticipantePartido, Coach, Canchas, PartidoCancha, Arbitro, ArbitroPartido, Sancion, TablaPosiciones,
-                     HistorialSuspension)
 
-from django.contrib.auth import get_user_model
+from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
 
-User = get_user_model()
 
-class RegisterSerializer(serializers.ModelSerializer):
-    password = serializers.CharField(write_only=True)
 
-    class Meta:
-        model = User
-        fields = ['email', 'username', 'password']
-
-    def create(self, validated_data):
-        user = User.objects.create_user(
-            email=validated_data['email'],
-            username=validated_data['username'],
-            password=validated_data['password']
-        )
-        return user
     
-from django.contrib.auth import authenticate
 
-class LoginSerializer(serializers.Serializer):
-    email = serializers.EmailField()
+from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
+from rest_framework import serializers
+
+
+class CustomTokenObtainPairSerializer(TokenObtainPairSerializer):
+    correo = serializers.CharField()
     password = serializers.CharField(write_only=True)
 
-    def validate(self, data):
-        # Intentar autenticar al usuario
-        user = authenticate(email=data['email'], password=data['password'])
-        if user is None:
-            raise serializers.ValidationError("Credenciales inválidas.")
-        data['user'] = user
+    def validate(self, attrs):
+        # Toma los datos originales
+        correo = attrs.get('correo')
+        password = attrs.get('password')
+
+        # Renombra 'correo' a 'username' en el diccionario
+        attrs['username'] = correo
+
+        # Llama a la validación original de SimpleJWT con los nombres que espera ('username' y 'password')
+        data = super().validate(attrs)
+
+        # Añade información adicional al token
+        usuario = self.user  # El usuario autenticado que SimpleJWT encontró
+        data['nombre'] = usuario.nombre
+        data['rol'] = usuario.nombre_rol
+
         return data
 
 
 
 
-class ParticipanteSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = Participante
-        fields = "__all__"     
-        
+
 class TorneoSerializer(serializers.ModelSerializer):
     class Meta:
         model = Torneo
         fields = '__all__'
-        
 
-
-class ConfiguracionTorneoSerializer(serializers.ModelSerializer):
+class AvanceFaseSerializer(serializers.ModelSerializer):
     class Meta:
-        model = ConfiguracionTorneo
+        model = AvanceFase
         fields = '__all__'
-
 
 class GrupoSerializer(serializers.ModelSerializer):
     class Meta:
         model = Grupo
         fields = '__all__'
 
-
-class EquipoSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = Equipo
-        fields = '__all__'
-
-
-class GrupoEquipoSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = GrupoEquipo
-        fields = '__all__'
-
-
 class JornadaSerializer(serializers.ModelSerializer):
     class Meta:
         model = Jornada
         fields = '__all__'
-
 
 class CalendarioSerializer(serializers.ModelSerializer):
     class Meta:
         model = Calendario
         fields = '__all__'
 
-
-class ParticipanteEquipoSerializer(serializers.ModelSerializer):
+class HorarioSerializer(serializers.ModelSerializer):
     class Meta:
-        model = ParticipanteEquipo
+        model = Horario
         fields = '__all__'
 
+class CalendarioHorarioSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = CalendarioHorario
+        fields = '__all__'
+
+class EquipoSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Equipo
+        fields = '__all__'
+
+class CanchaSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Cancha
+        fields = '__all__'
 
 class PartidoSerializer(serializers.ModelSerializer):
     class Meta:
         model = Partido
         fields = '__all__'
 
-
-class ResultadoSerializer(serializers.ModelSerializer):
+class InscripcionSerializer(serializers.ModelSerializer):
     class Meta:
-        model = Resultado
+        model = Inscripcion
         fields = '__all__'
 
-
-class ParticipantePartidoSerializer(serializers.ModelSerializer):
+class ParticipanteSerializer(serializers.ModelSerializer):
     class Meta:
-        model = ParticipantePartido
+        model = Participante
         fields = '__all__'
 
-
-class CoachSerializer(serializers.ModelSerializer):
+class TarjetaSerializer(serializers.ModelSerializer):
     class Meta:
-        model = Coach
-        fields = '__all__'
-
-
-class CanchasSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = Canchas
-        fields = '__all__'
-
-
-class PartidoCanchaSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = PartidoCancha
-        fields = '__all__'
-
-
-class ArbitroSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = Arbitro
-        fields = '__all__'
-
-
-class ArbitroPartidoSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = ArbitroPartido
-        fields = '__all__'
-
-class SancionSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = Sancion
-        fields = '__all__'
-
-class TablaposicionesSerializer(serializers.ModelSerializer):
-    class Meta: 
-        model = TablaPosiciones
+        model = Tarjeta
         fields = '__all__'
 
 class HistorialSuspensionSerializer(serializers.ModelSerializer):
@@ -156,5 +113,22 @@ class HistorialSuspensionSerializer(serializers.ModelSerializer):
         model = HistorialSuspension
         fields = '__all__'
 
+class ResultadoSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Resultado
+        fields = '__all__'
 
+class GoleadorSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Goleador
+        fields = '__all__'
 
+class TablaPosicionesSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = TablaPosiciones
+        fields = '__all__'
+
+class HistorialCambiosResultadoSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = HistorialCambiosResultado
+        fields = '__all__'

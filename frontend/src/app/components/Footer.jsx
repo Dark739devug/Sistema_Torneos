@@ -1,8 +1,14 @@
 
 const Footer = () => {
   return (
-    <footer style={{ background: '#333', color: '#fff', padding: '1rem' }}>
-    <p>© 2025 LigaPro. Todos los derechos reservados.</p>
+    <footer>
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+      <img src="/Recurso 2.png" width={200} />
+    </div>
+
+
+
+  
 
     
     </footer>

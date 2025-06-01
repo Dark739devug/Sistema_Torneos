@@ -1,59 +1,55 @@
-from rest_framework.routers import DefaultRouter  # Corregir la importación
-from django.urls import path
-from django.urls import include
-from .views import (
-    ParticipanteViewSet,
+from rest_framework.routers import DefaultRouter
+from django.urls import path, include
+from rest_framework_simplejwt.views import TokenRefreshView
+from .views import RegistroUsuarioAPIView, CustomTokenObtainPairView
+
+from .views import ( CustomTokenObtainPairView, 
+   
     TorneoViewSet,
-    ConfiguracionTorneoViewSet,
+    AvanceFaseViewSet,
     GrupoViewSet,
-    EquipoViewSet,
-    GrupoEquipoViewSet,
     JornadaViewSet,
     CalendarioViewSet,
-    ParticipanteEquipoViewSet,
+    HorarioViewSet,
+    CalendarioHorarioViewSet,
+    EquipoViewSet,
+    CanchaViewSet,
     PartidoViewSet,
+    InscripcionViewSet,
+    ParticipanteViewSet,
+    TarjetaViewSet,
+    HistorialSuspensionViewSet,
     ResultadoViewSet,
-    ParticipantePartidoViewSet,
-    CoachViewSet,
-    CanchasViewSet,
-    PartidoCanchaViewSet,
-    ArbitroViewSet,
-    ArbitroPartidoViewSet,
-    SancionViewSet,
-    TablaposicionesViewSet,
-    HistorialSuspensionViewset,LoginView, RegisterView
+    GoleadorViewSet,
+    TablaPosicionesViewSet,
+    HistorialCambiosResultadoViewSet,
+    
+)
 
-)  
-# Asegúrate de que la vista está correctamente importada
-# Crear una instancia del router
 router = DefaultRouter()
+router.register('torneos', TorneoViewSet)
+router.register('avance-fase', AvanceFaseViewSet)
+router.register('grupos', GrupoViewSet)
+router.register('jornadas', JornadaViewSet)
+router.register('calendarios', CalendarioViewSet)
+router.register('horarios', HorarioViewSet)
+router.register('calendario-horario', CalendarioHorarioViewSet)
+router.register('equipos', EquipoViewSet)
+router.register('canchas', CanchaViewSet)
+router.register('partidos', PartidoViewSet)
+router.register('inscripciones', InscripcionViewSet)
+router.register('participantes', ParticipanteViewSet)
+router.register('tarjetas', TarjetaViewSet)
+router.register('historial-suspension', HistorialSuspensionViewSet)
+router.register('resultados', ResultadoViewSet)
+router.register('goleadores', GoleadorViewSet)
+router.register('tabla-posiciones', TablaPosicionesViewSet)
+router.register('historial-cambios-resultado', HistorialCambiosResultadoViewSet)
 
-# Registrar el 'ParticipanteViewSet' con la ruta correcta
-router.register('apitorneos', ParticipanteViewSet, basename='participante')  # Corregir la ruta
-
-router.register('torneos',  TorneoViewSet, basename='torneo')
-router.register('configuraciones-torneo', ConfiguracionTorneoViewSet, basename='configuraciontorneo')
-router.register('grupos', GrupoViewSet, basename='grupo')
-router.register('equipos', EquipoViewSet, basename='equipo')
-router.register('grupo-equipos', GrupoEquipoViewSet, basename='grupoequipo')
-router.register('jornadas', JornadaViewSet, basename='jornada')
-router.register('calendarios', CalendarioViewSet, basename='calendario')
-router.register('participante-equipos', ParticipanteEquipoViewSet, basename='participanteequipo')
-router.register('partidos', PartidoViewSet, basename='partido')
-router.register('resultados', ResultadoViewSet, basename='resultado')
-router.register('participante-partidos', ParticipantePartidoViewSet, basename='participantepartido')
-router.register('coaches', CoachViewSet, basename='coach')
-router.register('canchas', CanchasViewSet, basename='cancha')
-router.register('partido-canchas', PartidoCanchaViewSet, basename='partidocancha')
-router.register('arbitros', ArbitroViewSet, basename='arbitro')
-router.register('arbitro-partidos', ArbitroPartidoViewSet, basename='arbitropartido')
-router.register('sanciones', SancionViewSet, basename='sancion')
-router.register('tablaposiciones', TablaposicionesViewSet, basename='tablaposiciones' )
-router.register('historialsuspension', HistorialSuspensionViewset, basename='historialsuspension')
-
-# Asignar las URLs generadas a urlpatterns
 urlpatterns = [
     path('', include(router.urls)),
-    path('register/', RegisterView.as_view(), name='register'),
-    path('login/', LoginView.as_view(), name='login'),
-    ]
+   path('registro/', RegistroUsuarioAPIView.as_view(), name='registro_usuario'),
+    path('login/', CustomTokenObtainPairView.as_view(), name='token_obtain_pair'),
+    path('token/refresh/', TokenRefreshView.as_view(), name='token_refresh'),
+]
+

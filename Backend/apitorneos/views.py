@@ -1,148 +1,140 @@
 from rest_framework import viewsets, permissions
-from .models import (Participante, Torneo, ConfiguracionTorneo, Grupo, Equipo,
-    GrupoEquipo, Jornada, Calendario, ParticipanteEquipo, Partido,
-    Resultado, ParticipantePartido, Coach, Canchas, PartidoCancha,
-    Arbitro, ArbitroPartido, Sancion, TablaPosiciones, HistorialSuspension)
+from .models import ( Torneo, Grupo, AvanceFase, Jornada, Calendario, Horario,
+                     CalendarioHorario, Equipo, Cancha, Partido,
+                     Inscripcion, Participante, Tarjeta, HistorialSuspension,
+                     Resultado, Goleador, TablaPosiciones, HistorialCambiosResultado)
 
-from .serializers import (ParticipanteSerializer, TorneoSerializer,
-                          ConfiguracionTorneoSerializer, GrupoSerializer, EquipoSerializer, GrupoEquipoSerializer,
-                          JornadaSerializer, CalendarioSerializer, 
-                          ParticipanteEquipoSerializer, PartidoCanchaSerializer,
-                          PartidoSerializer, ResultadoSerializer, 
-                          ParticipantePartidoSerializer, CoachSerializer,
-                          CanchasSerializer, ArbitroPartidoSerializer, 
-                          ArbitroSerializer, SancionSerializer, 
-                          TablaposicionesSerializer, HistorialSuspensionSerializer, RegisterSerializer, LoginSerializer) 
+from .serializers import ( AvanceFaseSerializer, TorneoSerializer, GrupoSerializer,
+                          JornadaSerializer, CalendarioSerializer, HorarioSerializer,
+                          CalendarioHorarioSerializer, EquipoSerializer, CanchaSerializer,
+                          PartidoSerializer, InscripcionSerializer, ParticipanteSerializer,
+                          TarjetaSerializer, HistorialCambiosResultado, ResultadoSerializer,
+                          GoleadorSerializer, HistorialSuspensionSerializer, TablaPosicionesSerializer, HistorialCambiosResultadoSerializer)    
 
-from rest_framework import status, generics
+
+from rest_framework_simplejwt.views import TokenObtainPairView
+from .serializers import CustomTokenObtainPairSerializer
+
+class CustomTokenObtainPairView(TokenObtainPairView):
+    serializer_class = CustomTokenObtainPairSerializer
+
+from rest_framework.views import APIView
 from rest_framework.response import Response
-from django.contrib.auth import login
+from rest_framework import status
+from rest_framework.views import APIView
+from django.contrib.auth.hashers import make_password
+from .models import Usuario
 
+class RegistroUsuarioAPIView(APIView):
+    def post(self, request):
+        nombre = request.data.get('nombre')
+        correo = request.data.get('correo')
+        password = request.data.get('password')
+        nombre_rol = request.data.get('nombre_rol', 'Estudiante')  
 
-class RegisterView(generics.CreateAPIView):
-    serializer_class = RegisterSerializer
+        if not nombre or not correo or not password:
+            return Response({'error': 'Todos los campos son requeridos.'}, status=status.HTTP_400_BAD_REQUEST)
 
-    def post(self, request, *args, **kwargs):
-        serializer = self.get_serializer(data=request.data)
-        if serializer.is_valid():
-            user = serializer.save()
-            return Response({"message": "Usuario registrado correctamente"}, status=status.HTTP_201_CREATED)
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-    
+        if Usuario.objects.filter(correo=correo).exists():
+            return Response({'error': 'El correo ya está registrado.'}, status=status.HTTP_400_BAD_REQUEST)
 
-class LoginView(generics.GenericAPIView):
-    serializer_class = LoginSerializer
+        usuario = Usuario.objects.create(
+            nombre=nombre,
+            correo=correo,
+            nombre_rol=nombre_rol,
+            password=make_password(password)
+        )
 
-    def post(self, request, *args, **kwargs):
-        serializer = self.get_serializer(data=request.data)
-        if serializer.is_valid():
-            user = serializer.validated_data['user']
-            login(request, user)
-            return Response({"message": "Inicio de sesión exitoso"}, status=status.HTTP_200_OK)
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-
-
-
-
-class ParticipanteViewSet(viewsets.ModelViewSet):
-    queryset = Participante.objects.all()
-    permission_classes = [permissions.AllowAny]
-    serializer_class = ParticipanteSerializer
+        return Response({'message': 'Usuario registrado exitosamente.'}, status=status.HTTP_201_CREATED)
 
 class TorneoViewSet(viewsets.ModelViewSet):
     queryset = Torneo.objects.all()
-    permission_classes = [permissions.AllowAny]
     serializer_class = TorneoSerializer
-
-class ConfiguracionTorneoViewSet(viewsets.ModelViewSet):
-    queryset = ConfiguracionTorneo.objects.all()
     permission_classes = [permissions.AllowAny]
-    serializer_class = ConfiguracionTorneoSerializer
 
 class GrupoViewSet(viewsets.ModelViewSet):
     queryset = Grupo.objects.all()
-    permission_classes = [permissions.AllowAny]
     serializer_class = GrupoSerializer
-
-class EquipoViewSet(viewsets.ModelViewSet):
-    queryset = Equipo.objects.all()
     permission_classes = [permissions.AllowAny]
-    serializer_class = EquipoSerializer
-
-class GrupoEquipoViewSet(viewsets.ModelViewSet):
-    queryset = GrupoEquipo.objects.all()
-    permission_classes = [permissions.AllowAny]
-    serializer_class = GrupoEquipoSerializer
 
 class JornadaViewSet(viewsets.ModelViewSet):
     queryset = Jornada.objects.all()
-    permission_classes = [permissions.AllowAny]
     serializer_class = JornadaSerializer
+    permission_classes = [permissions.AllowAny]
+
+class AvanceFaseViewSet(viewsets.ModelViewSet):
+    queryset = AvanceFase.objects.all()
+    serializer_class = AvanceFaseSerializer
+    permission_classes = [permissions.AllowAny]
 
 class CalendarioViewSet(viewsets.ModelViewSet):
     queryset = Calendario.objects.all()
-    permission_classes = [permissions.AllowAny]
     serializer_class = CalendarioSerializer
-
-class ParticipanteEquipoViewSet(viewsets.ModelViewSet):
-    queryset = ParticipanteEquipo.objects.all()
     permission_classes = [permissions.AllowAny]
-    serializer_class = ParticipanteEquipoSerializer
+
+class HorarioViewSet(viewsets.ModelViewSet):
+    queryset = Horario.objects.all()
+    serializer_class = HorarioSerializer
+    permission_classes = [permissions.AllowAny]
+
+class CalendarioHorarioViewSet(viewsets.ModelViewSet):
+    queryset = CalendarioHorario.objects.all()
+    serializer_class = CalendarioHorarioSerializer
+    permission_classes = [permissions.AllowAny]
+
+class EquipoViewSet(viewsets.ModelViewSet):
+    queryset = Equipo.objects.all()
+    serializer_class = EquipoSerializer
+    permission_classes = [permissions.AllowAny]
+
+class CanchaViewSet(viewsets.ModelViewSet):
+    queryset = Cancha.objects.all()
+    serializer_class = CanchaSerializer
+    permission_classes = [permissions.AllowAny]
 
 class PartidoViewSet(viewsets.ModelViewSet):
     queryset = Partido.objects.all()
-    permission_classes = [permissions.AllowAny]
     serializer_class = PartidoSerializer
+    permission_classes = [permissions.AllowAny]
+
+class InscripcionViewSet(viewsets.ModelViewSet):
+    queryset = Inscripcion.objects.all()
+    serializer_class = InscripcionSerializer
+    permission_classes = [permissions.AllowAny]
+
+class ParticipanteViewSet(viewsets.ModelViewSet):
+    queryset = Participante.objects.all()
+    serializer_class = ParticipanteSerializer
+    permission_classes = [permissions.AllowAny]
+
+class TarjetaViewSet(viewsets.ModelViewSet):
+    queryset = Tarjeta.objects.all()
+    serializer_class = TarjetaSerializer
+    permission_classes = [permissions.AllowAny]
+
+class HistorialSuspensionViewSet(viewsets.ModelViewSet):
+    queryset = HistorialSuspension.objects.all()
+    serializer_class = HistorialSuspensionSerializer
+    permission_classes = [permissions.AllowAny]
 
 class ResultadoViewSet(viewsets.ModelViewSet):
     queryset = Resultado.objects.all()
-    permission_classes = [permissions.AllowAny]
     serializer_class = ResultadoSerializer
-
-class ParticipantePartidoViewSet(viewsets.ModelViewSet):
-    queryset = ParticipantePartido.objects.all()
     permission_classes = [permissions.AllowAny]
-    serializer_class = ParticipantePartidoSerializer
 
-class CoachViewSet(viewsets.ModelViewSet):
-    queryset = Coach.objects.all()
+class GoleadorViewSet(viewsets.ModelViewSet):
+    queryset = Goleador.objects.all()
+    serializer_class = GoleadorSerializer
     permission_classes = [permissions.AllowAny]
-    serializer_class = CoachSerializer
 
-class CanchasViewSet(viewsets.ModelViewSet):
-    queryset = Canchas.objects.all()
-    permission_classes = [permissions.AllowAny]
-    serializer_class = CanchasSerializer
-
-class PartidoCanchaViewSet(viewsets.ModelViewSet):
-    queryset = PartidoCancha.objects.all()
-    permission_classes = [permissions.AllowAny]
-    serializer_class = PartidoCanchaSerializer
-
-class ArbitroViewSet(viewsets.ModelViewSet):
-    queryset = Arbitro.objects.all()
-    permission_classes = [permissions.AllowAny]
-    serializer_class = ArbitroSerializer
-
-class ArbitroPartidoViewSet(viewsets.ModelViewSet):
-    queryset = ArbitroPartido.objects.all()
-    permission_classes = [permissions.AllowAny]
-    serializer_class = ArbitroPartidoSerializer
-
-class SancionViewSet(viewsets.ModelViewSet):
-    queryset = Sancion.objects.all()
-    permission_classes = [permissions.AllowAny]
-    serializer_class = SancionSerializer
-
-class TablaposicionesViewSet(viewsets.ModelViewSet):
+class TablaPosicionesViewSet(viewsets.ModelViewSet):
     queryset = TablaPosiciones.objects.all()
-    serializer_class = TablaposicionesSerializer
+    serializer_class = TablaPosicionesSerializer
+    permission_classes = [permissions.AllowAny]
 
-
-class HistorialSuspensionViewset(viewsets.ModelViewSet):
-    queryset = HistorialSuspension.objects.all()
-    permission_classes = [permissions.AllowAny]   # Faltaba esto
-    serializer_class = HistorialSuspensionSerializer
-
+class HistorialCambiosResultadoViewSet(viewsets.ModelViewSet):
+    queryset = HistorialCambiosResultado.objects.all()
+    serializer_class = HistorialCambiosResultadoSerializer
+    permission_classes = [permissions.AllowAny]
 
 

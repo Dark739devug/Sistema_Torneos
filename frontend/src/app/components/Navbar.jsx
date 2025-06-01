@@ -1,42 +1,63 @@
 "use client";
 import Link from "next/link";
-import React from "react";
+import React, { useContext } from "react";
+import { useRouter } from "next/navigation";
 import { Germania_One } from 'next/font/google';
+import { AuthContext } from "@/context/AuthContext";
 
 const germania = Germania_One({
   weight: '400',
   subsets: ['latin'],
-  
 });
 
-
-
 const Navbar = () => {
+  const { isLoggedIn, logout } = useContext(AuthContext);
+  const router = useRouter();
+
+  const handleLogout = () => {
+    logout();
+    router.push("/login");
+  };
+
   return (
     <nav className="navbar">
       <div className="navbar-container">
-       <span className={`${germania.className} text-white text-6xl ml-2`}>
-  LigaPro
-</span>
+        <img src="/logoumes.png" width="70" height={70} />
 
-        <div className="navbar-links">
-          <Link href="/" className="nav-link">
-            Inicio
-          </Link>
-          <Link href="/about" className="nav-link">
-            Acerca de
-          </Link>
-          <Link href="/contact" className="nav-link">
-            Contacto
-          </Link>
-        </div>
+        <span className={`${germania.className} text-white text-6xl ml-2`}>
+          LigaPro
+        </span>
+
+        {/* Solo se muestran los links si no está logeado */}
+        {!isLoggedIn && (
+          <div className="navbar-links">
+            <Link href="/" className="nav-link">
+              Inicio
+            </Link>
+            <Link href="/about" className="nav-link">
+              Acerca de
+            </Link>
+            <Link href="/contact" className="nav-link">
+              Contacto
+            </Link>
+          </div>
+        )}
+
         <div className="auth-buttons">
-          <Link href="/register">
-            <button className="register-btn">Registrarse</button>
-          </Link>
-          <Link href="/login">
-            <button className="login-btn">Iniciar Sesión</button>
-          </Link>
+          {isLoggedIn ? (
+            <button className="login-btn" onClick={handleLogout}>
+              Cerrar sesión
+            </button>
+          ) : (
+            <>
+              <Link href="/register">
+                <button className="register-btn">Registrarse</button>
+              </Link>
+              <Link href="/login">
+                <button className="login-btn">Iniciar Sesión</button>
+              </Link>
+            </>
+          )}
         </div>
       </div>
     </nav>

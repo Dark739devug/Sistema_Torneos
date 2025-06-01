@@ -1,17 +1,19 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useContext } from 'react';
 import { useRouter } from 'next/navigation';
 import styles from './LoginForm.module.css';
+import { AuthContext } from '@/context/AuthContext'; // 🚀 Importa el contexto
 
 export default function LoginForm() {
   const [formData, setFormData] = useState({
-    email: '',
-    password: ''
+    correo: '',
+    contrasena: ''
   });
 
   const [message, setMessage] = useState('');
   const router = useRouter();
+  const { login } = useContext(AuthContext); // 🚀 Usa el login() del contexto
 
   const handleChange = (e) => {
     setFormData({
@@ -23,48 +25,57 @@ export default function LoginForm() {
   const handleSubmit = async (e) => {
     e.preventDefault();
 
-    const response = await fetch('http://localhost:8000/api/login/', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify(formData),
-    });
+    const bodyToSend = {
+      correo: formData.correo,
+      password: formData.contrasena
+    };
 
-    const data = await response.json();
+    try {
+      const response = await fetch('http://localhost:8000/api/login/', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(bodyToSend),
+      });
 
-    if (response.ok) {
-      // Puedes guardar el token si lo devuelve
-      localStorage.setItem('token', data.token); // si usas JWT por ejemplo
-      setMessage('Inicio de sesión exitoso');
-      router.push('/dashboard'); // redirige donde quieras
-    } else {
-      setMessage(data.detail || 'Credenciales inválidas');
+      const data = await response.json();
+
+      if (response.ok && data.access && data.refresh) {
+        // 🚀 Usa el login del contexto para actualizar el estado global Y guardar en localStorage
+        login(data);
+
+        setMessage('Inicio de sesión exitoso');
+
+        // Redirige a la página principal o dashboard
+        router.push('/dashboard');
+      } else {
+        const errorMsg = data.detail || data.error || 'Credenciales inválidas';
+        setMessage(errorMsg);
+      }
+    } catch (error) {
+      console.error('Error al iniciar sesión:', error);
+      setMessage('Ocurrió un error. Intenta nuevamente.');
     }
   };
 
   return (
     <form onSubmit={handleSubmit} className={styles.formContainer}>
-              <img
-        src="/logo2.png"
-        alt="Logo de la página"
-        className={styles.logo}  // Puedes usar una clase CSS para ajustarla
-      />
       <h2 className={styles.title}>Iniciar Sesión</h2>
       <input
         type="email"
-        name="email"
+        name="correo"
         placeholder="Correo electrónico"
-        value={formData.email}
+        value={formData.correo}
         onChange={handleChange}
         required
         className={styles.input}
       />
       <input
         type="password"
-        name="password"
+        name="contrasena"
         placeholder="Contraseña"
-        value={formData.password}
+        value={formData.contrasena}
         onChange={handleChange}
         required
         className={styles.input}
@@ -74,3 +85,5 @@ export default function LoginForm() {
     </form>
   );
 }
+
+

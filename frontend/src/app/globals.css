@@ -3,9 +3,6 @@
 @tailwind utilities;
 
 
-/* globals.css */
-
-/* Estilo global */
 * {
   margin: 0;
   padding: 0;
@@ -14,11 +11,11 @@
 
 body {
   font-family: 'Geist Sans', sans-serif;
-  background-image: url('/soccer-5506110_1920.jpg'); /* Ruta a la imagen de fondo */
-  background-size: cover;  /* La imagen cubre toda la pantalla */
-  background-position: center center; /* Asegura que la imagen esté centrada */
-  background-attachment: fixed; /* Hace que la imagen de fondo no se desplace al hacer scroll */
-  min-height: 100vh; /* Garantiza que el contenido ocupe al menos toda la altura de la ventana */
+  background-image: url('/soccer-5506110_1920.jpg'); 
+  background-size: cover;  
+  background-position: center center; 
+  background-attachment: fixed; 
+   min-height: 100vh; 
   display: flex;
   flex-direction: column;
 
@@ -26,7 +23,7 @@ body {
 
 main {
   flex-grow: 1;
-  padding-top: 60px; /* Añade espacio para el navbar fijo */
+  padding-top: 60px; 
 }
 a {
   text-decoration: none;
@@ -38,9 +35,8 @@ button {
   cursor: pointer;
 }
 
-/* 🔹 Estilo para el Navbar */
 .navbar {
-  background-color: rgba(0, 0, 0, 0.8);  /* Fondo semi-transparente */
+  background-color: rgba(0, 0, 0, 0.8);  
   color: white;
   padding: 10px 0;
   position: fixed;
@@ -76,7 +72,7 @@ button {
 }
 
 .navbar span {
-  font-size: 3rem !important; /* Asegura que el tamaño de fuente se aplique correctamente */
+  font-size: 3rem !important; 
 }
 
 
@@ -116,28 +112,13 @@ button {
   background-color: #218838;
 }
 
-/* 🔹 Footer al fondo */
+
 footer {
-  margin-top: auto; /* Empuja el footer hacia abajo */
+  margin-top: auto; 
   padding: 20px;
-  background-color: #333;
+  background-color: rgba(0, 0, 0, 0.50);
   color: white;
   text-align: center;
   width: 100%;
-}
-
-.contenedor {
-  display: flex;
-  align-items: center;  /* Centra verticalmente */
-  gap: 20px;            /* Espacio entre imagen y texto */
-  padding: 20px;
-}
-
-.imagen {
-  width: 120px;
-  height: auto;
-}
-
-.texto {
-  flex: 1;               /* Ocupa el espacio restante */
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.15);
 }

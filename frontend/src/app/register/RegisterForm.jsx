@@ -1,4 +1,4 @@
-'use client';
+"use client";
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
@@ -6,13 +6,14 @@ import styles from './RegisterForm.module.css';
 
 export default function RegisterForm() {
   const [formData, setFormData] = useState({
-    username: '',
-    email: '',
-    password: ''
+    nombre: '',
+    correo: '',
+    password: '',
+    nombre_rol: 'Estudiante' 
   });
 
   const [message, setMessage] = useState('');
-  const router = useRouter(); // Importante
+  const router = useRouter();
 
   const handleChange = (e) => {
     setFormData({
@@ -24,19 +25,19 @@ export default function RegisterForm() {
   const handleSubmit = async (e) => {
     e.preventDefault();
 
-    const response = await fetch('http://localhost:8000/api/register/', {
+    const response = await fetch('http://localhost:8000/api/registro/', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
       },
-      body: JSON.stringify(formData),
+      body: JSON.stringify(formData),  // Ahora el JSON usa claves correctas
     });
 
     const data = await response.json();
 
     if (response.ok) {
       setMessage('Usuario registrado exitosamente');
-      router.push('/login'); // Redirige a login
+      router.push('/login'); 
     } else {
       setMessage(JSON.stringify(data));
     }
@@ -44,27 +45,22 @@ export default function RegisterForm() {
 
   return (
     <form onSubmit={handleSubmit} className={styles.formContainer}>
-           <img
-        src="/logo2.png"
-        alt="Logo de la página"
-        className={styles.logo} 
-         // Puedes usar una clase CSS para ajustarla
-      />
       <h2 className={styles.title}>Registro</h2>
+
       <input
         type="text"
-        name="username"
+        name="nombre"
         placeholder="Nombre de usuario"
-        value={formData.username}
+        value={formData.nombre}
         onChange={handleChange}
         required
         className={styles.input}
       />
       <input
         type="email"
-        name="email"
+        name="correo"
         placeholder="Correo electrónico"
-        value={formData.email}
+        value={formData.correo}
         onChange={handleChange}
         required
         className={styles.input}
@@ -78,8 +74,22 @@ export default function RegisterForm() {
         required
         className={styles.input}
       />
+
+      <select
+        name="nombre_rol"
+        value={formData.nombre_rol}
+        onChange={handleChange}
+        required
+        className={styles.input}
+      >
+        <option value="Estudiante">Estudiante</option>
+        <option value="Administrador">Administrador</option>
+        <option value="Couch">Couch</option>
+      </select>
+
       <button type="submit" className={styles.button}>Registrarse</button>
       {message && <p className={styles.message}>{message}</p>}
     </form>
   );
 }
+
