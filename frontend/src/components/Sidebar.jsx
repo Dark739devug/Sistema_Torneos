@@ -12,7 +12,7 @@ import {
 } from "react-icons/fa";
 
 const iconos = {
-  campeonatos: <FaTrophy />,
+  Torneos: <FaTrophy />,
   calendario: <FaCalendarAlt />,
   registroEquipos: <FaUsers />,
   resultados: <FaClipboardList />,
@@ -20,7 +20,7 @@ const iconos = {
 };
 
 const routes = [
-  { name: 'Campeonatos', path: '/dashboard/campeonatos', icon: iconos.campeonatos },
+  { name: 'Torneos', path: '/dashboard/Torneos', icon: iconos.Torneos },
   { name: 'Calendario', path: '/dashboard/calendario', icon: iconos.calendario },
   { name: 'Registro de Equipos', path: '/dashboard/registroEquipos', icon: iconos.registroEquipos },
   { name: 'Resultados', path: '/dashboard/resultados', icon: iconos.resultados },

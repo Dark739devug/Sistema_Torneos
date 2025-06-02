@@ -44,9 +44,11 @@ class CustomTokenObtainPairSerializer(TokenObtainPairSerializer):
 
 
 class TorneoSerializer(serializers.ModelSerializer):
+
     class Meta:
         model = Torneo
         fields = '__all__'
+
 
 class AvanceFaseSerializer(serializers.ModelSerializer):
     class Meta:

@@ -59,25 +59,33 @@ class Usuario(AbstractBaseUser, PermissionsMixin):
     class Meta:
         db_table = 'Usuario'
 
+FASES = [
+    ('Fase de grupos', 'Fase de grupos'),
+    ('Semifinal', 'Semifinal'),
+    ('Final', 'Final'),
+    ('Finalizado', 'Finalizado')
+]
 
 
 class Torneo(models.Model):
     id = models.AutoField(db_column='ID_Torneo', primary_key=True)
-    nombre_torneo = models.CharField(db_column='Nombre_Torneo', max_length=40)
-    fecha_inicio = models.DateField(db_column='Fecha_Inicio')
-    fecha_fin = models.DateField(db_column='Fecha_Fin')
-    descripcion_torneo = models.CharField(db_column='Descripcion_Torneo', max_length=200)
-    fecha_creacion = models.DateTimeField(db_column='Fecha_Creacion')
-    fecha_modificacion = models.DateTimeField(db_column='Fecha_Modificacion')
-    creado_por = models.CharField(db_column='Creado_Por', max_length=50)
-    maximo_equipos = models.IntegerField(db_column='Maximo_Equipos')
-    numero_grupos = models.IntegerField(db_column='Numero_Grupos')
-    fase_actual = models.CharField(db_column='Fase_Actual', max_length=20)
-    estado_activo = models.BooleanField(db_column='Estado_Activo', default=True)
+    nombre_torneo = models.CharField(max_length=40)
+    fecha_inicio = models.DateField()
+    fecha_fin = models.DateField()
+    descripcion_torneo = models.TextField()
+    fecha_creacion = models.DateTimeField(auto_now_add=True)
+    fecha_modificacion = models.DateTimeField(auto_now=True)
+    creado_por = models.CharField(max_length=50)
+    maximo_equipos = models.IntegerField()
+    numero_grupos = models.IntegerField()
+    fase_actual = models.CharField(max_length=20, choices=FASES)
+    imagen = models.ImageField(upload_to='torneos/', blank=True, null=True)
+
 
     class Meta:
         db_table = 'Torneo'
         managed = False
+
 
 
 class AvanceFase(models.Model):

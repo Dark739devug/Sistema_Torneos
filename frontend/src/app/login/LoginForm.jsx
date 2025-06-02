@@ -3,7 +3,7 @@
 import { useState, useContext } from 'react';
 import { useRouter } from 'next/navigation';
 import styles from './LoginForm.module.css';
-import { AuthContext } from '@/context/AuthContext'; // 🚀 Importa el contexto
+import { AuthContext } from '@/context/AuthContext';
 
 export default function LoginForm() {
   const [formData, setFormData] = useState({
@@ -13,7 +13,7 @@ export default function LoginForm() {
 
   const [message, setMessage] = useState('');
   const router = useRouter();
-  const { login } = useContext(AuthContext); // 🚀 Usa el login() del contexto
+  const { login } = useContext(AuthContext);
 
   const handleChange = (e) => {
     setFormData({
@@ -41,14 +41,17 @@ export default function LoginForm() {
 
       const data = await response.json();
 
-      if (response.ok && data.access && data.refresh) {
-        // 🚀 Usa el login del contexto para actualizar el estado global Y guardar en localStorage
+      // Asegúrate de que el backend envía el nombre del usuario en la respuesta
+      // Ejemplo de respuesta: { access, refresh, usuario: { nombre: "Juan Pérez" } }
+      if (response.ok && data.access && data.refresh && data.usuario && data.usuario.nombre) {
+        // Guarda solo el nombre del usuario en localStorage
+        localStorage.setItem('usuario', data.usuario.nombre);
+
+        // Llama al login del AuthContext para manejar los tokens
         login(data);
 
         setMessage('Inicio de sesión exitoso');
-
-        // Redirige a la página principal o dashboard
-        router.push('/dashboard');
+        router.push('/dashboard'); // Redirige al dashboard o la ruta que necesites
       } else {
         const errorMsg = data.detail || data.error || 'Credenciales inválidas';
         setMessage(errorMsg);

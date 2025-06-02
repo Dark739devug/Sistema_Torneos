@@ -195,4 +195,7 @@ SIMPLE_JWT = {
     'REFRESH_TOKEN_LIFETIME': timedelta(days=1),
 }
 
-AUTH_USER_MODEL = 'apitorneos.Usuario'  
+AUTH_USER_MODEL = 'apitorneos.Usuario' 
+#Gestion de archivos estáticos y multimedia
+MEDIA_URL = '/media/'
+MEDIA_ROOT = os.path.join(BASE_DIR, 'media') 

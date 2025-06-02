@@ -47,10 +47,13 @@ class RegistroUsuarioAPIView(APIView):
 
         return Response({'message': 'Usuario registrado exitosamente.'}, status=status.HTTP_201_CREATED)
 
+
+
 class TorneoViewSet(viewsets.ModelViewSet):
     queryset = Torneo.objects.all()
     serializer_class = TorneoSerializer
-    permission_classes = [permissions.AllowAny]
+
+
 
 class GrupoViewSet(viewsets.ModelViewSet):
     queryset = Grupo.objects.all()
