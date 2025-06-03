@@ -1,0 +1,6 @@
+
+# Ignorar archivos generados
+env/
+__pycache__/
+*.pyc
+venv/
