@@ -4,6 +4,8 @@ import "./globals.css";
 import Navbar from "./components/Navbar";
 import Footer from "./components/Footer";
 import { AuthProvider } from "@/context/AuthContext";
+import { ToastContainer } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -22,14 +24,15 @@ export const metadata = {
 
 export default function RootLayout({ children }) {
   return (
-    <html lang="en">
+    <html lang="es">
       <body className={`${geistSans.variable} ${geistMono.variable} antialiased`}>
-      <AuthProvider>
-        {/* ✅ El Navbar ahora se muestra en todas las páginas */}
-        <Navbar /> {/* ✅ El Navbar ahora se muestra en todas las páginas */}
-        <main>{children}</main>
-        <Footer />
-      </AuthProvider>
+        <AuthProvider>
+          {/* ✅ El Navbar ahora se muestra en todas las páginas */}
+          <Navbar /> {/* ✅ El Navbar ahora se muestra en todas las páginas */}
+          <ToastContainer position="top-center" autoClose={3000} />
+          <main>{children}</main>
+          <Footer />
+        </AuthProvider>
       </body>
     </html>
   );

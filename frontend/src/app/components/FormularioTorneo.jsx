@@ -1,8 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { toast, ToastContainer } from 'react-toastify';
-import 'react-toastify/dist/ReactToastify.css';
+import { toast } from 'react-toastify';
 
 export default function FormularioTorneo({ torneo, onTorneoActualizado, onCerrar }) {
   const [formData, setFormData] = useState({
@@ -73,31 +72,44 @@ export default function FormularioTorneo({ torneo, onTorneoActualizado, onCerrar
 
       const response = await fetch(url, {
         method,
-        body: formDataToSend
+        body: formDataToSend,
+        headers: {
+          Accept: 'application/json'
+        }
       });
 
+      const text = await response.text();
+      let data;
+      try {
+        data = JSON.parse(text);
+      } catch (error) {
+        data = { error: text };
+      }
+
+      console.log('Respuesta del backend:', data); // 👈 Agrega esto para depurar
+
       if (response.ok) {
-        toast.success(torneo ? '¡Torneo actualizado exitosamente!' : '¡Torneo creado exitosamente!', {
-          position: 'top-center',
-          autoClose: 3000
-        });
+        toast.success(
+          data.mensaje || data.message || '✅ Operación exitosa.',
+          {
+            position: 'top-center',
+            autoClose: 3000
+          }
+        );
         onTorneoActualizado && onTorneoActualizado();
+        // Opcional: cerrar el formulario tras éxito
+        // setTimeout(() => { onCerrar && onCerrar(); }, 1000);
       } else {
-        const data = await response.json();
-        if (data.error) {
-          toast.error(data.error, {
+        toast.error(
+          data.error || data.detail || '❌ Ocurrió un error inesperado.',
+          {
             position: 'top-center',
             autoClose: 5000
-          });
-        } else {
-          toast.error('Ocurrió un error inesperado.', {
-            position: 'top-center',
-            autoClose: 5000
-          });
-        }
+          }
+        );
       }
     } catch (error) {
-      toast.error('Error en la petición: ' + error.message, {
+      toast.error('❌ Error en la petición: ' + error.message, {
         position: 'top-center',
         autoClose: 5000
       });
@@ -218,9 +230,7 @@ export default function FormularioTorneo({ torneo, onTorneoActualizado, onCerrar
         </div>
       </form>
 
-      {/* Contenedor para react-toastify */}
-      <ToastContainer />
+     
     </div>
   );
 }
-

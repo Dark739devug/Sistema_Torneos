@@ -5,7 +5,7 @@ from .views import RegistroUsuarioAPIView, CustomTokenObtainPairView
 
 from .views import ( CustomTokenObtainPairView, 
    
-    TorneoViewSet,
+    TorneoViewSet,BasesTorneoViewSet,
     AvanceFaseViewSet,
     GrupoViewSet,
     JornadaViewSet,
@@ -46,6 +46,7 @@ router.register('resultados', ResultadoViewSet)
 router.register('goleadores', GoleadorViewSet)
 router.register('tabla-posiciones', TablaPosicionesViewSet)
 router.register('historial-cambios-resultado', HistorialCambiosResultadoViewSet)
+router.register('bases_torneo', BasesTorneoViewSet, basename='bases_torneo')
 
 
 urlpatterns = [

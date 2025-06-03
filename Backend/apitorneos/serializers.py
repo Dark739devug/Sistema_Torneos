@@ -3,7 +3,7 @@ from .models import (Usuario, Torneo,AvanceFase, Grupo, Jornada, Calendario, Hor
                     CalendarioHorario, Equipo, Cancha, Partido,
                     Inscripcion, Participante, Tarjeta, HistorialSuspension,
                         Resultado, Goleador, TablaPosiciones, HistorialCambiosResultado
-                    )
+                    , BasesTorneo)
                      
 from rest_framework import serializers
 
@@ -39,11 +39,16 @@ class CustomTokenObtainPairSerializer(TokenObtainPairSerializer):
 
         return data
 
-
-
-
+class BasesTorneoSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = BasesTorneo
+        fields = ['id', 'descripcion_base', 'id_torneo']
+        extra_kwargs = {
+            'id_torneo': {'write_only': True} 
+        }
 
 class TorneoSerializer(serializers.ModelSerializer):
+    bases = BasesTorneoSerializer(many=True, source='basestorneo_set', read_only=True)  # 👈 Campo solo de lectura
 
     class Meta:
         model = Torneo

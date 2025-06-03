@@ -3,6 +3,8 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import styles from './RegisterForm.module.css';
+import { toast } from 'react-toastify'; // 👉 Importa react-toastify
+import 'react-toastify/dist/ReactToastify.css'; // 👉 Importa los estilos de react-toastify
 
 export default function RegisterForm() {
   const [formData, setFormData] = useState({
@@ -12,7 +14,6 @@ export default function RegisterForm() {
     nombre_rol: 'Estudiante' 
   });
 
-  const [message, setMessage] = useState('');
   const router = useRouter();
 
   const handleChange = (e) => {
@@ -30,16 +31,22 @@ export default function RegisterForm() {
       headers: {
         'Content-Type': 'application/json',
       },
-      body: JSON.stringify(formData),  // Ahora el JSON usa claves correctas
+      body: JSON.stringify(formData),
     });
 
     const data = await response.json();
 
     if (response.ok) {
-      setMessage('Usuario registrado exitosamente');
+      toast.success('✅ Usuario registrado exitosamente', {
+        position: 'top-center',
+        autoClose: 3000
+      });
       router.push('/login'); 
     } else {
-      setMessage(JSON.stringify(data));
+      toast.error(data.error || '❌ Error al registrar el usuario', {
+        position: 'top-center',
+        autoClose: 5000
+      });
     }
   };
 
@@ -88,8 +95,8 @@ export default function RegisterForm() {
       </select>
 
       <button type="submit" className={styles.button}>Registrarse</button>
-      {message && <p className={styles.message}>{message}</p>}
     </form>
   );
 }
+
 

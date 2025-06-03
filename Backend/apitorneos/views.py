@@ -1,10 +1,10 @@
 from rest_framework import viewsets, permissions
-from .models import ( Torneo, Grupo, AvanceFase, Jornada, Calendario, Horario,
+from .models import ( Usuario,Torneo, Grupo, AvanceFase, Jornada, Calendario, Horario,
                      CalendarioHorario, Equipo, Cancha, Partido,
                      Inscripcion, Participante, Tarjeta, HistorialSuspension,
-                     Resultado, Goleador, TablaPosiciones, HistorialCambiosResultado)
+                     Resultado, Goleador, TablaPosiciones, HistorialCambiosResultado, BasesTorneo)
 
-from .serializers import ( AvanceFaseSerializer, TorneoSerializer, GrupoSerializer,
+from .serializers import ( CustomTokenObtainPairSerializer,BasesTorneoSerializer, AvanceFaseSerializer, TorneoSerializer, GrupoSerializer,
                           JornadaSerializer, CalendarioSerializer, HorarioSerializer,
                           CalendarioHorarioSerializer, EquipoSerializer, CanchaSerializer,
                           PartidoSerializer, InscripcionSerializer, ParticipanteSerializer,
@@ -13,7 +13,8 @@ from .serializers import ( AvanceFaseSerializer, TorneoSerializer, GrupoSerializ
 
 
 from rest_framework_simplejwt.views import TokenObtainPairView
-from .serializers import CustomTokenObtainPairSerializer
+
+
 
 class CustomTokenObtainPairView(TokenObtainPairView):
     serializer_class = CustomTokenObtainPairSerializer
@@ -23,7 +24,9 @@ from rest_framework.response import Response
 from rest_framework import status
 from rest_framework.views import APIView
 from django.contrib.auth.hashers import make_password
-from .models import Usuario
+from rest_framework import viewsets, filters, status
+from rest_framework.response import Response
+from django.db import OperationalError
 
 class RegistroUsuarioAPIView(APIView):
     def post(self, request):
@@ -47,20 +50,6 @@ class RegistroUsuarioAPIView(APIView):
 
         return Response({'message': 'Usuario registrado exitosamente.'}, status=status.HTTP_201_CREATED)
 
-from rest_framework import viewsets, filters
-
-from rest_framework import viewsets, filters, status
-from django.db import IntegrityError
-
-from rest_framework import viewsets, filters, status
-from rest_framework.response import Response
-from django.db import OperationalError
-
-from rest_framework import viewsets, filters, status
-from rest_framework.response import Response
-from django.db import OperationalError
-from .models import Torneo
-from .serializers import TorneoSerializer
 
 class TorneoViewSet(viewsets.ModelViewSet):
     queryset = Torneo.objects.all()
@@ -76,22 +65,20 @@ class TorneoViewSet(viewsets.ModelViewSet):
         except OperationalError as e:
             error_msg = str(e)
             if 'La fecha de fin no puede ser anterior' in error_msg:
-                return Response(
-                    {'error': 'La fecha de fin no puede ser menor a la fecha de inicio.'},
-                    status=status.HTTP_400_BAD_REQUEST
-                )
+                return Response({'error': 'La fecha de fin no puede ser menor a la fecha de inicio.'}, status=status.HTTP_400_BAD_REQUEST)
             if 'La fecha de fin de inscripción no puede ser anterior' in error_msg:
-                return Response(
-                    {'error': 'La fecha de fin de inscripción no puede ser menor a la fecha de inicio de inscripción.'},
-                    status=status.HTTP_400_BAD_REQUEST
-                )
-            
-            return Response(
-                {'error': error_msg},
-                status=status.HTTP_400_BAD_REQUEST
-            )
+                return Response({'error': 'La fecha de fin de inscripción no puede ser menor a la fecha de inicio de inscripción.'}, status=status.HTTP_400_BAD_REQUEST)
+            return Response({'error': error_msg}, status=status.HTTP_400_BAD_REQUEST)
+
         headers = self.get_success_headers(serializer.data)
-        return Response(serializer.data, status=status.HTTP_201_CREATED, headers=headers)
+        return Response(
+            {
+                'mensaje': '✅ Registro exitoso.',
+                'torneo': serializer.data
+            },
+            status=status.HTTP_201_CREATED,
+            headers=headers
+        )
 
     def update(self, request, *args, **kwargs):
         partial = kwargs.pop('partial', False)
@@ -103,22 +90,31 @@ class TorneoViewSet(viewsets.ModelViewSet):
         except OperationalError as e:
             error_msg = str(e)
             if 'La fecha de fin no puede ser anterior' in error_msg:
-                return Response(
-                    {'error': 'La fecha de fin no puede ser menor a la fecha de inicio.'},
-                    status=status.HTTP_400_BAD_REQUEST
-                )
+                return Response({'error': 'La fecha de fin no puede ser menor a la fecha de inicio.'}, status=status.HTTP_400_BAD_REQUEST)
             if 'La fecha de fin de inscripción no puede ser anterior' in error_msg:
-                return Response(
-                    {'error': 'La fecha de fin de inscripción no puede ser menor a la fecha de inicio de inscripción.'},
-                    status=status.HTTP_400_BAD_REQUEST
-                )
-            return Response(
-                {'error': error_msg},
-                status=status.HTTP_400_BAD_REQUEST
-            )
-        return Response(serializer.data)
+                return Response({'error': 'La fecha de fin de inscripción no puede ser menor a la fecha de inicio de inscripción.'}, status=status.HTTP_400_BAD_REQUEST)
+            return Response({'error': error_msg}, status=status.HTTP_400_BAD_REQUEST)
+
+        return Response(
+            {
+                'mensaje': '✅ Edición exitosa.',
+                'torneo': serializer.data
+            },
+            status=status.HTTP_200_OK
+        )
 
 
+
+class BasesTorneoViewSet(viewsets.ModelViewSet):
+    queryset = BasesTorneo.objects.all()
+    serializer_class = BasesTorneoSerializer
+
+    def create(self, request, *args, **kwargs):
+        serializer = self.get_serializer(data=request.data)
+        if serializer.is_valid():
+            self.perform_create(serializer)
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
 

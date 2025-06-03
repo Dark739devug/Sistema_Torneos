@@ -87,6 +87,22 @@ class Torneo(models.Model):
         db_table = 'Torneo'
         managed = False
 
+from django.db import models
+
+from django.db import models
+
+class BasesTorneo(models.Model):
+    id = models.AutoField(db_column='ID_Base', primary_key=True)
+    id_torneo = models.ForeignKey('Torneo', db_column='ID_Torneo', on_delete=models.CASCADE)
+    descripcion_base = models.CharField(max_length=500)
+
+    class Meta:
+        db_table = 'Bases_Torneo'
+        managed = False  
+
+    def __str__(self):
+        return f'Base {self.id} para Torneo {self.id_torneo_id}'
+
 
 
 class AvanceFase(models.Model):
