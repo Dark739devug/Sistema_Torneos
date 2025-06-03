@@ -41,5 +41,8 @@ yarn-error.log*
 next-env.d.ts
 __pycache__/
 *.pyc
+<<<<<<< HEAD
 venv/
 
+=======
+>>>>>>> b9779af (Cambios antes de aplicar stash)
