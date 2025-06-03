@@ -47,11 +47,78 @@ class RegistroUsuarioAPIView(APIView):
 
         return Response({'message': 'Usuario registrado exitosamente.'}, status=status.HTTP_201_CREATED)
 
+from rest_framework import viewsets, filters
 
+from rest_framework import viewsets, filters, status
+from django.db import IntegrityError
+
+from rest_framework import viewsets, filters, status
+from rest_framework.response import Response
+from django.db import OperationalError
+
+from rest_framework import viewsets, filters, status
+from rest_framework.response import Response
+from django.db import OperationalError
+from .models import Torneo
+from .serializers import TorneoSerializer
 
 class TorneoViewSet(viewsets.ModelViewSet):
     queryset = Torneo.objects.all()
     serializer_class = TorneoSerializer
+    filter_backends = [filters.SearchFilter]
+    search_fields = ['nombre_torneo', 'descripcion_torneo', 'fase_actual']
+
+    def create(self, request, *args, **kwargs):
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        try:
+            self.perform_create(serializer)
+        except OperationalError as e:
+            error_msg = str(e)
+            if 'La fecha de fin no puede ser anterior' in error_msg:
+                return Response(
+                    {'error': 'La fecha de fin no puede ser menor a la fecha de inicio.'},
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+            if 'La fecha de fin de inscripción no puede ser anterior' in error_msg:
+                return Response(
+                    {'error': 'La fecha de fin de inscripción no puede ser menor a la fecha de inicio de inscripción.'},
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+            
+            return Response(
+                {'error': error_msg},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        headers = self.get_success_headers(serializer.data)
+        return Response(serializer.data, status=status.HTTP_201_CREATED, headers=headers)
+
+    def update(self, request, *args, **kwargs):
+        partial = kwargs.pop('partial', False)
+        instance = self.get_object()
+        serializer = self.get_serializer(instance, data=request.data, partial=partial)
+        serializer.is_valid(raise_exception=True)
+        try:
+            self.perform_update(serializer)
+        except OperationalError as e:
+            error_msg = str(e)
+            if 'La fecha de fin no puede ser anterior' in error_msg:
+                return Response(
+                    {'error': 'La fecha de fin no puede ser menor a la fecha de inicio.'},
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+            if 'La fecha de fin de inscripción no puede ser anterior' in error_msg:
+                return Response(
+                    {'error': 'La fecha de fin de inscripción no puede ser menor a la fecha de inicio de inscripción.'},
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+            return Response(
+                {'error': error_msg},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        return Response(serializer.data)
+
+
 
 
 

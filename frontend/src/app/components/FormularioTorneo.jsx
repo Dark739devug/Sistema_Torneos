@@ -1,6 +1,8 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { toast, ToastContainer } from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css';
 
 export default function FormularioTorneo({ torneo, onTorneoActualizado, onCerrar }) {
   const [formData, setFormData] = useState({
@@ -12,12 +14,13 @@ export default function FormularioTorneo({ torneo, onTorneoActualizado, onCerrar
     numero_grupos: '',
     fase_actual: '',
     creado_por: '',
-    imagen: null
+    imagen: null,
+    fecha_inicio_inscripcion: '',
+    fecha_fin_inscripcion: ''
   });
 
   const fases = ['Fase de grupos', 'Semifinal', 'Final', 'Finalizado'];
 
-  // Si es edición, carga los datos iniciales
   useEffect(() => {
     if (torneo) {
       setFormData({
@@ -29,7 +32,9 @@ export default function FormularioTorneo({ torneo, onTorneoActualizado, onCerrar
         numero_grupos: torneo.numero_grupos,
         fase_actual: torneo.fase_actual,
         creado_por: torneo.creado_por,
-        imagen: null
+        imagen: null,
+        fecha_inicio_inscripcion: torneo.fecha_inicio_inscripcion || '',
+        fecha_fin_inscripcion: torneo.fecha_fin_inscripcion || ''
       });
     }
   }, [torneo]);
@@ -54,6 +59,8 @@ export default function FormularioTorneo({ torneo, onTorneoActualizado, onCerrar
     formDataToSend.append('numero_grupos', formData.numero_grupos);
     formDataToSend.append('fase_actual', formData.fase_actual);
     formDataToSend.append('creado_por', formData.creado_por);
+    formDataToSend.append('fecha_inicio_inscripcion', formData.fecha_inicio_inscripcion);
+    formDataToSend.append('fecha_fin_inscripcion', formData.fecha_fin_inscripcion);
     if (formData.imagen) {
       formDataToSend.append('imagen', formData.imagen);
     }
@@ -70,19 +77,35 @@ export default function FormularioTorneo({ torneo, onTorneoActualizado, onCerrar
       });
 
       if (response.ok) {
+        toast.success(torneo ? '¡Torneo actualizado exitosamente!' : '¡Torneo creado exitosamente!', {
+          position: 'top-center',
+          autoClose: 3000
+        });
         onTorneoActualizado && onTorneoActualizado();
       } else {
         const data = await response.json();
-        alert('❌ Error: ' + JSON.stringify(data));
+        if (data.error) {
+          toast.error(data.error, {
+            position: 'top-center',
+            autoClose: 5000
+          });
+        } else {
+          toast.error('Ocurrió un error inesperado.', {
+            position: 'top-center',
+            autoClose: 5000
+          });
+        }
       }
     } catch (error) {
-      alert('❌ Error en la petición: ' + error.message);
+      toast.error('Error en la petición: ' + error.message, {
+        position: 'top-center',
+        autoClose: 5000
+      });
     }
   };
 
   return (
     <div style={{ position: 'relative' }}>
-      {/* Botón flotante para cerrar (❌) */}
       <button
         type="button"
         onClick={onCerrar}
@@ -176,12 +199,28 @@ export default function FormularioTorneo({ torneo, onTorneoActualizado, onCerrar
           accept="image/*"
           onChange={handleChange}
         />
+        <input
+          type="date"
+          name="fecha_inicio_inscripcion"
+          value={formData.fecha_inicio_inscripcion}
+          onChange={handleChange}
+        />
+        <input
+          type="date"
+          name="fecha_fin_inscripcion"
+          value={formData.fecha_fin_inscripcion}
+          onChange={handleChange}
+        />
 
         <div>
           <button type="submit">{torneo ? 'Actualizar' : 'Crear'}</button>
           <button type="button" onClick={onCerrar}>Cancelar</button>
         </div>
       </form>
+
+      {/* Contenedor para react-toastify */}
+      <ToastContainer />
     </div>
   );
 }
+
