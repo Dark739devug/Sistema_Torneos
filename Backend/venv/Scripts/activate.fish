@@ -33,7 +33,7 @@ end
 # Unset irrelevant variables.
 deactivate nondestructive
 
-set -gx VIRTUAL_ENV 'C:\Users\esdra\OneDrive\Desktop\GestionPartidos\Backend\venv'
+set -gx VIRTUAL_ENV 'C:\Users\rocio\Desktop\Sistema_Torneos\Backend\venv'
 
 set -gx _OLD_VIRTUAL_PATH $PATH
 set -gx PATH "$VIRTUAL_ENV/"Scripts $PATH
