@@ -86,9 +86,15 @@ class CalendarioHorarioSerializer(serializers.ModelSerializer):
         fields = '__all__'
 
 class EquipoSerializer(serializers.ModelSerializer):
+    grupo = GrupoSerializer(read_only=True)
+    torneo = serializers.PrimaryKeyRelatedField(queryset=Torneo.objects.all(), write_only=True, required=False)  # ✅ ya no obligatorio en edición
+    torneo_detalle = TorneoSerializer(source='torneo', read_only=True)
+
     class Meta:
         model = Equipo
         fields = '__all__'
+        read_only_fields = ['fecha_creacion', 'fecha_modificacion']
+
 
 class CanchaSerializer(serializers.ModelSerializer):
     class Meta:
@@ -101,6 +107,8 @@ class PartidoSerializer(serializers.ModelSerializer):
         fields = '__all__'
 
 class InscripcionSerializer(serializers.ModelSerializer):
+    estado = serializers.CharField(read_only=True)
+
     class Meta:
         model = Inscripcion
         fields = '__all__'

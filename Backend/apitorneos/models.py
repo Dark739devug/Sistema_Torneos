@@ -182,18 +182,20 @@ class Cancha(models.Model):
 
 class Equipo(models.Model):
     id = models.AutoField(db_column='ID_Equipo', primary_key=True)
-    grupo = models.ForeignKey(Grupo, db_column='ID_Grupo', null=True, on_delete=models.SET_NULL)
     nombre_equipo = models.CharField(db_column='Nombre_Equipo', max_length=50)
     color_uniforme = models.CharField(db_column='Color_Uniforme', max_length=50)
     estado_equipo = models.CharField(db_column='Estado_Equipo', max_length=50)
     torneo = models.ForeignKey(Torneo, db_column='ID_Torneo', on_delete=models.CASCADE)
+    grupo = models.ForeignKey(Grupo, db_column='ID_Grupo', on_delete=models.CASCADE, null=True, blank=True)
     fecha_creacion = models.DateTimeField(db_column='Fecha_Creacion')
     fecha_modificacion = models.DateTimeField(db_column='Fecha_Modificacion')
+    imagen = models.ImageField(upload_to='Equipos/', blank=True, null=True)
     creado_por = models.CharField(db_column='Creado_Por', max_length=50)
 
     class Meta:
         db_table = 'Equipo'
         managed = False
+        
 class Partido(models.Model):
     id = models.AutoField(db_column='ID_Partidos', primary_key=True)
     cancha = models.ForeignKey('Cancha', db_column='ID_Cancha', null=True, on_delete=models.SET_NULL)

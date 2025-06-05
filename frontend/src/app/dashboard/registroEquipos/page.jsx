@@ -1,58 +1,70 @@
 'use client';
-import { useState } from 'react';
-import Sidebar from '@/components/Sidebar';
+
 import FormEquipo from '@/app/componentesEquipos/FormEquipo';
 import ListaEquipos from '@/app/componentesEquipos/ListaEquipos';
+import DashboardLayout from '@/layouts/DashboardLayout';;
+import { useState } from 'react';
 
 export default function EquiposPage() {
+  const [mostrarFormulario, setMostrarFormulario] = useState(false);
+  const [equipoAEditar, setEquipoAEditar] = useState(null);
   const [recargar, setRecargar] = useState(false);
-  const [equipoEdit, setEquipoEdit] = useState(null);
-  const [showForm, setShowForm] = useState(false);
 
-  const handleEquipoActualizado = () => {
-    setRecargar(!recargar);
-    setShowForm(false);
-    setEquipoEdit(null);
+  const abrirFormularioCrear = () => {
+    setEquipoAEditar(null);
+    setMostrarFormulario(true);
+  };
+
+  const abrirModalEdicion = (equipo) => {
+    setEquipoAEditar(equipo);
+    setMostrarFormulario(true);
+  };
+
+  const cerrarModal = () => {
+    setMostrarFormulario(false);
+    setEquipoAEditar(null);
   };
 
   return (
-    <div style={{ display: 'flex', minHeight: '100vh', marginTop: '30px' }}>
-      <Sidebar />
-      
-      <div style={{ flex: 1, padding: '2rem', background: '#f4f4f4' }}>
-        <div className="w-full">
-          <div className="flex justify-between items-center mb-6">
-            <h1 className="text-2xl font-bold">Registro de Equipos</h1>
-            <button
-              onClick={() => {
-                setEquipoEdit(null);
-                setShowForm(true);
-              }}
-              className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700"
-            >
-              Registrar Nuevo Equipo
-            </button>
-          </div>
+    <DashboardLayout>
+      <div style={{ padding: '2rem' }}>
+        <h1>Equipos</h1>
+        <button
+          onClick={abrirFormularioCrear}
+          style={{
+            background: '#0070f3',
+            color: '#fff',
+            padding: '0.5rem 1rem',
+            borderRadius: '4px',
+            border: 'none',
+            cursor: 'pointer',
+            marginBottom: '1rem'
+          }}
+        >
+          Nuevo Equipo
+        </button>
 
-          {showForm && (
-            <div className="mb-8">
+        <ListaEquipos recargar={recargar} onEditar={abrirModalEdicion} />
+
+        {mostrarFormulario && (
+          <div style={{
+            position: 'fixed', top: 0, left: 0, width: '100vw', height: '100vh',
+            background: 'rgba(0,0,0,0.5)', display: 'flex',
+            justifyContent: 'center', alignItems: 'center', zIndex: 1000
+          }}>
+            <div style={{ background: '#fff', borderRadius: '8px', padding: '2rem', maxWidth: '500px', width: '90%' }}>
               <FormEquipo
-                equipo={equipoEdit}
-                onEquipoActualizado={handleEquipoActualizado}
-                onCerrar={() => setShowForm(false)}
+                equipo={equipoAEditar}
+                onCerrar={cerrarModal}
+                onEquipoActualizado={() => {
+                  cerrarModal();
+                  setRecargar(!recargar);
+                }}
               />
             </div>
-          )}
-
-          <ListaEquipos 
-            recargar={recargar} 
-            onEditar={(equipo) => {
-              setEquipoEdit(equipo);
-              setShowForm(true);
-            }} 
-          />
-        </div>
+          </div>
+        )}
       </div>
-    </div>
+    </DashboardLayout>
   );
 }

@@ -1,221 +1,304 @@
 'use client';
+
 import { useEffect, useState } from 'react';
-import { FaUsers, FaEdit, FaTrash, FaPlus, FaSearch } from 'react-icons/fa';
-import { fetchWithAuth } from '@/utils/auth';
+import { FaUsers, FaEdit, FaTrash, FaSearch } from 'react-icons/fa';
+import { toast } from 'react-toastify';
 import FormEquipo from './FormEquipo';
 
-export default function ListaEquipos() {
+export default function ListaEquipos({ recargar }) {
   const [equipos, setEquipos] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState('');
-  const [modalAbierto, setModalAbierto] = useState(false);
-  const [equipoEditando, setEquipoEditando] = useState(null);
-  const [busqueda, setBusqueda] = useState('');
-  const [torneoSeleccionado, setTorneoSeleccionado] = useState('');
-  const [torneos, setTorneos] = useState([]);
+  const [query, setQuery] = useState('');
+  const [equipoIdSeleccionado, setEquipoIdSeleccionado] = useState(null);
+  const [equipoAEditar, setEquipoAEditar] = useState(null);
+  const [modoFormulario, setModoFormulario] = useState(null);
+  const [inscripciones, setInscripciones] = useState({});
+  const [estadosInscripcion, setEstadosInscripcion] = useState({});
 
+  // Cargar equipos e inscripciones existentes
   const cargarEquipos = async () => {
-    setLoading(true);
     try {
-      const response = await fetchWithAuth('/api/equipos/');
-      if (!response.ok) {
-        throw new Error('Error al cargar equipos');
+      const response = await fetch(`http://127.0.0.1:8000/api/equipos/?search=${query}`);
+      if (response.ok) {
+        const data = await response.json();
+        setEquipos(data);
+      } else {
+        toast.error('❌ Error al obtener la lista de equipos.');
       }
-      setEquipos(await response.json());
-      setError('');
-    } catch (err) {
-      setError(err.message);
-    } finally {
-      setLoading(false);
+    } catch (error) {
+      console.error('❌ Error:', error);
+      toast.error('❌ Error: ' + error.message);
     }
   };
 
-  const cargarTorneos = async () => {
+  // Cargar todas las inscripciones existentes
+  const cargarInscripciones = async () => {
     try {
-      const response = await fetchWithAuth('/api/torneos/');
-      if (!response.ok) {
-        throw new Error('Error al cargar torneos');
+      const response = await fetch('http://127.0.0.1:8000/api/inscripciones/');
+      if (response.ok) {
+        const data = await response.json();
+        
+        // Crear un objeto con los IDs de equipos inscritos
+        const inscripcionesMap = {};
+        // Crear un objeto con los estados de inscripción
+        const estadosMap = {};
+        
+        data.forEach(inscripcion => {
+          inscripcionesMap[inscripcion.equipo] = true;
+          estadosMap[inscripcion.equipo] = inscripcion.estado;
+        });
+        
+        setInscripciones(inscripcionesMap);
+        setEstadosInscripcion(estadosMap);
+      } else {
+        toast.error('❌ Error al obtener las inscripciones.');
       }
-      setTorneos(await response.json());
-    } catch (err) {
-      console.error('Error al cargar torneos:', err);
+    } catch (error) {
+      console.error('❌ Error al cargar inscripciones:', error);
+    }
+  };
+
+  const crearInscripcion = async (equipoId) => {
+    try {
+      const response = await fetch('http://127.0.0.1:8000/api/inscripciones/', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          equipo: equipoId,
+          fecha_solicitud: new Date().toISOString()
+        })
+      });
+
+      const data = await response.json();
+
+      if (response.ok) {
+        toast.success('✅ Inscripción creada correctamente.', { position: 'top-center' });
+        // Actualizar estado para marcar este equipo como inscrito
+        setInscripciones(prev => ({
+          ...prev,
+          [equipoId]: true
+        }));
+        // Actualizar estado de la inscripción
+        setEstadosInscripcion(prev => ({
+          ...prev,
+          [equipoId]: data.estado
+        }));
+      } else {
+        console.error('❌ Error al crear inscripción:', data);
+        toast.error(data.error || '❌ Error al crear inscripción.', { position: 'top-center' });
+      }
+    } catch (error) {
+      console.error('❌ Error:', error);
+      toast.error('❌ Error al crear inscripción.', { position: 'top-center' });
     }
   };
 
   const eliminarEquipo = async (id) => {
-    if (!confirm('¿Está seguro de eliminar este equipo?')) return;
-    
+    if (!confirm('¿Seguro que deseas eliminar este equipo?')) return;
     try {
-      const response = await fetchWithAuth(`/api/equipos/${id}/`, {
+      const response = await fetch(`http://127.0.0.1:8000/api/equipos/${id}/`, {
         method: 'DELETE'
       });
-      
-      if (!response.ok) {
-        throw new Error('Error al eliminar equipo');
+      if (response.ok) {
+        setEquipos((prev) => prev.filter((e) => e.id !== id));
+        // Si el equipo eliminado estaba inscrito, lo quitamos del estado
+        setInscripciones(prev => {
+          const newInscripciones = { ...prev };
+          delete newInscripciones[id];
+          return newInscripciones;
+        });
+        // También eliminamos su estado de inscripción
+        setEstadosInscripcion(prev => {
+          const newEstados = { ...prev };
+          delete newEstados[id];
+          return newEstados;
+        });
+        toast.success('✅ Equipo eliminado correctamente.');
+      } else {
+        const data = await response.json();
+        toast.error(data.error || '❌ Error al eliminar el equipo.');
       }
-      
-      setEquipos(equipos.filter(e => e.id !== id));
-    } catch (err) {
-      setError(err.message);
+    } catch (error) {
+      toast.error('❌ Error: ' + error.message);
     }
   };
 
-  const handleEditar = (equipo) => {
-    setEquipoEditando(equipo);
-    setModalAbierto(true);
+  const activarEdicionEquipo = (equipo) => {
+    setEquipoAEditar(equipo);
+    setEquipoIdSeleccionado(equipo.id);
+    setModoFormulario('editar');
   };
 
-  const handleNuevoEquipo = () => {
-    setEquipoEditando(null);
-    setModalAbierto(true);
-  };
-
-  const filtrarEquipos = () => {
-    return equipos.filter(equipo => {
-      const coincideNombre = equipo.nombre_equipo.toLowerCase().includes(busqueda.toLowerCase());
-      const coincideTorneo = !torneoSeleccionado || equipo.torneo?.id === parseInt(torneoSeleccionado);
-      return coincideNombre && coincideTorneo;
-    });
+  // Función para determinar el color según el estado
+  const getEstadoColor = (estado) => {
+    switch(estado) {
+      case 'Aprobada':
+        return 'green';
+      case 'Pendiente':
+        return 'orange';
+      case 'Rechazada':
+        return 'red';
+      default:
+        return 'black';
+    }
   };
 
   useEffect(() => {
-    cargarEquipos();
-    cargarTorneos();
-  }, []);
-
-  if (loading) return (
-    <div className="flex justify-center items-center h-64">
-      <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500"></div>
-    </div>
-  );
-
-  if (error) return <div className="text-red-500 p-4 text-center">{error}</div>;
+    const cargarDatos = async () => {
+      await cargarEquipos();
+      await cargarInscripciones();
+    };
+    
+    cargarDatos();
+  }, [recargar, query]);
 
   return (
-    <div className="bg-white shadow rounded-lg p-6">
-      <div className="border-b pb-4 mb-6">
-        <h2 className="text-2xl font-bold text-gray-800 flex items-center">
-          <FaUsers className="mr-2" /> Listado de Equipos
-        </h2>
-      </div>
+    <div style={{ padding: '2rem' }}>
+      <h1><FaUsers style={{ marginRight: '0.5rem' }} /> Lista de Equipos</h1>
 
-      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-6">
-        <div className="relative w-full md:w-64">
-          <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-            <FaSearch className="text-gray-400" />
-          </div>
-          <input
-            type="text"
-            placeholder="Buscar equipo..."
-            value={busqueda}
-            onChange={(e) => setBusqueda(e.target.value)}
-            className="pl-10 pr-4 py-2 w-full border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-          />
-        </div>
-        
-        <select
-          value={torneoSeleccionado}
-          onChange={(e) => setTorneoSeleccionado(e.target.value)}
-          className="px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-        >
-          <option value="">Todos los torneos</option>
-          {torneos.map(torneo => (
-            <option key={torneo.id} value={torneo.id}>{torneo.nombre_torneo}</option>
-          ))}
-        </select>
-        
-        <button
-          onClick={handleNuevoEquipo}
-          className="flex items-center justify-center px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
-        >
-          <FaPlus className="mr-2" /> Nuevo Equipo
-        </button>
-      </div>
-
-      {modalAbierto && (
-        <FormEquipo
-          equipo={equipoEditando}
-          onEquipoActualizado={cargarEquipos}
-          onCerrar={() => setModalAbierto(false)}
+      <div style={{ display: 'flex', alignItems: 'center', marginBottom: '1rem' }}>
+        <FaSearch style={{ marginRight: '0.5rem' }} />
+        <input
+          type="text"
+          placeholder="Buscar equipo..."
+          value={query}
+          onChange={(e) => setQuery(e.target.value)}
+          style={{ padding: '0.5rem', flex: 1, maxWidth: '400px' }}
         />
-      )}
+      </div>
 
-      {filtrarEquipos().length === 0 ? (
-        <div className="text-center py-8 text-gray-500">
-          {busqueda || torneoSeleccionado ? 'No se encontraron equipos con esos criterios' : 'No hay equipos registrados'}
-        </div>
-      ) : (
-        <div className="overflow-x-auto">
-          <table className="min-w-full divide-y divide-gray-200">
-            <thead className="bg-gray-50">
-              <tr>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Nombre</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Torneo</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Grupo</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Estado</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Acciones</th>
-              </tr>
-            </thead>
-            <tbody className="bg-white divide-y divide-gray-200">
-              {filtrarEquipos().map(equipo => (
-                <tr key={equipo.id} className="hover:bg-gray-50">
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <div className="flex items-center">
-                      {equipo.imagen && (
-                        <img 
-                          src={equipo.imagen} 
-                          alt={equipo.nombre_equipo}
-                          className="h-10 w-10 rounded-full mr-3 object-cover"
-                        />
-                      )}
-                      <div>
-                        <div className="font-medium text-gray-900">{equipo.nombre_equipo}</div>
-                        <div className="flex items-center text-sm text-gray-500">
-                          <span 
-                            className="inline-block h-3 w-3 rounded-full mr-1 border border-gray-300"
-                            style={{ backgroundColor: equipo.color_uniforme }}
-                          ></span>
-                          {equipo.color_uniforme}
-                        </div>
-                      </div>
-                    </div>
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                    {equipo.torneo?.nombre_torneo || 'N/A'}
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                    {equipo.grupo?.nombre_grupo || 'N/A'}
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full 
-                      ${equipo.estado_equipo === 'Aprobado' ? 'bg-green-100 text-green-800' : 
-                        equipo.estado_equipo === 'Rechazado' ? 'bg-red-100 text-red-800' : 
-                        'bg-yellow-100 text-yellow-800'}`}>
-                      {equipo.estado_equipo}
-                    </span>
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                    <button
-                      onClick={() => handleEditar(equipo)}
-                      className="text-blue-600 hover:text-blue-900 mr-4 flex items-center"
-                      title="Editar equipo"
-                    >
-                      <FaEdit className="mr-1" /> Editar
-                    </button>
-                    <button
-                      onClick={() => eliminarEquipo(equipo.id)}
-                      className="text-red-600 hover:text-red-900 flex items-center"
-                      title="Eliminar equipo"
-                    >
-                      <FaTrash className="mr-1" /> Eliminar
-                    </button>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      )}
+      <ul style={{ listStyle: 'none', padding: 0 }}>
+        {equipos.map((equipo) => (
+          <li
+            key={equipo.id}
+            style={{
+              marginBottom: '1rem',
+              padding: '1rem',
+              border: '1px solid #ccc',
+              borderRadius: '4px'
+            }}
+          >
+            <div style={{ display: 'flex', gap: '1rem', flexWrap: 'wrap' }}>
+              {/* Imagen */}
+              <div style={{ flex: '0 0 200px' }}>
+                {equipo.imagen ? (
+                  <img
+                    src={equipo.imagen}
+                    alt={equipo.nombre_equipo}
+                    style={{
+                      width: '200px',
+                      height: '200px',
+                      objectFit: 'cover',
+                      borderRadius: '4px'
+                    }}
+                  />
+                ) : (
+                  <div
+                    style={{
+                      width: '200px',
+                      height: '200px',
+                      border: '1px solid #ccc',
+                      borderRadius: '4px',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center'
+                    }}
+                  >
+                    Sin imagen
+                  </div>
+                )}
+              </div>
+
+              {/* Descripción */}
+              <div style={{ flex: 1 }}>
+                <h3>
+                  <FaUsers style={{ marginRight: '0.5rem' }} />
+                  {equipo.nombre_equipo}
+                </h3>
+                <p><strong>Color uniforme:</strong> {equipo.color_uniforme}</p>
+                <p><strong>Estado:</strong> {equipo.estado_equipo}</p>
+                <p><strong>Creado por:</strong> {equipo.creado_por}</p>
+                <p><strong>Torneo:</strong> {equipo.torneo_detalle ? equipo.torneo_detalle.nombre_torneo : 'N/A'}</p>
+                {equipo.fecha_creacion && (
+                  <p><strong>Fecha creación:</strong> {equipo.fecha_creacion}</p>
+                )}
+                {equipo.fecha_modificacion && (
+                  <p><strong>Fecha modificación:</strong> {equipo.fecha_modificacion}</p>
+                )}
+                <div style={{ marginTop: '0.5rem', display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
+                  <button onClick={() => activarEdicionEquipo(equipo)} style={{ color: '#0070f3' }}>
+                    <FaEdit /> Editar
+                  </button>
+                  <button onClick={() => eliminarEquipo(equipo.id)} style={{ color: '#dc3545' }}>
+                    <FaTrash /> Eliminar
+                  </button>
+                </div>
+              </div>
+
+              {/* Grupo asignado + Inscripción */}
+              <div style={{
+                flex: '0 0 200px',
+                display: 'flex',
+                flexDirection: 'column',
+                gap: '0.5rem'
+              }}>
+                <p><strong>Grupo asignado:</strong> {equipo.grupo ? equipo.grupo.nombre_grupo : 'No asignado'}</p>
+
+                {/* Verificar si el equipo está inscrito */}
+                {inscripciones[equipo.id] ? (
+                  <div>
+                    <p style={{ color: 'green', fontWeight: 'bold' }}>✅ Inscripcion enviada</p>
+                    {/* Nueva línea con el estado de la inscripción */}
+                    <p>
+                      Estado: 
+                      <span style={{ 
+                        color: getEstadoColor(estadosInscripcion[equipo.id]),
+                        fontWeight: 'bold',
+                        marginLeft: '0.5rem'
+                      }}>
+                        {estadosInscripcion[equipo.id]}
+                      </span>
+                    </p>
+                  </div>
+                ) : (
+                  <button
+                    onClick={() => crearInscripcion(equipo.id)}
+                    style={{
+                      background: '#28a745',
+                      color: '#fff',
+                      border: 'none',
+                      borderRadius: '4px',
+                      padding: '0.5rem',
+                      cursor: 'pointer'
+                    }}
+                  >
+                    Inscribir Equipo
+                  </button>
+                )}
+              </div>
+            </div>
+
+            {equipoIdSeleccionado === equipo.id && (
+              <FormEquipo
+                equipo={modoFormulario === 'editar' ? equipoAEditar : null}
+                onEquipoActualizado={() => {
+                  cargarEquipos();
+                  cargarInscripciones();
+                  setEquipoAEditar(null);
+                  setModoFormulario(null);
+                  setEquipoIdSeleccionado(null);
+                }}
+                onCerrar={() => {
+                  setEquipoAEditar(null);
+                  setModoFormulario(null);
+                  setEquipoIdSeleccionado(null);
+                }}
+              />
+            )}
+          </li>
+        ))}
+      </ul>
     </div>
   );
 }

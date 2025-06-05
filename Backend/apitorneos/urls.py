@@ -31,11 +31,11 @@ router = DefaultRouter()
 router.register('torneos', TorneoViewSet)
 router.register('avance-fase', AvanceFaseViewSet)
 router.register('grupos', GrupoViewSet)
+router.register('equipos', EquipoViewSet)
 router.register('jornadas', JornadaViewSet)
 router.register('calendarios', CalendarioViewSet)
 router.register('horarios', HorarioViewSet)
 router.register('calendario-horario', CalendarioHorarioViewSet)
-router.register('equipos', EquipoViewSet)
 router.register('canchas', CanchaViewSet)
 router.register('partidos', PartidoViewSet)
 router.register('inscripciones', InscripcionViewSet)
@@ -51,8 +51,9 @@ router.register('bases_torneo', BasesTorneoViewSet, basename='bases_torneo')
 
 urlpatterns = [
     path('', include(router.urls)),
-   path('registro/', RegistroUsuarioAPIView.as_view(), name='registro_usuario'),
+    path('registro/', RegistroUsuarioAPIView.as_view(), name='registro_usuario'),
     path('login/', CustomTokenObtainPairView.as_view(), name='token_obtain_pair'),
     path('token/refresh/', TokenRefreshView.as_view(), name='token_refresh'),
+    
 ]
 

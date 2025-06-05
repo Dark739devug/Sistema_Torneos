@@ -87,10 +87,18 @@ export default function ListaTorneos({ recargar, onEditar }) {
             border: '1px solid #ccc',
             borderRadius: '4px'
           }}>
-            <div style={{ display: 'flex', gap: '1rem' }}>
+            <div style={{ display: 'flex', gap: '1rem', flexWrap: 'wrap' }}>
               {torneo.imagen && (
-                <div style={{ flex: '0 0 150px' }}>
-                  <img src={torneo.imagen} alt="Logo" style={{ width: '150px', borderRadius: '4px' }} />
+                <div style={{ flex: '0 0 200px' }}>
+                  <img
+                    src={torneo.imagen}
+                    alt="Logo"
+                    style={{  width: '200px',
+                      height: '200px',
+                      objectFit: 'cover',
+                      borderRadius: '4px'
+                     }}
+                  />
                 </div>
               )}
 
@@ -162,7 +170,7 @@ export default function ListaTorneos({ recargar, onEditar }) {
                 idTorneo={torneo.id}
                 baseAEditar={baseAEditar}
                 onBaseAgregada={() => {
-                  cargarTorneos(); 
+                  cargarTorneos();
                   setBaseAEditar(null);
                 }}
                 onCancelarEdicion={() => setBaseAEditar(null)}

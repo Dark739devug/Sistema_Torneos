@@ -122,3 +122,25 @@ footer {
   width: 100%;
   box-shadow: 0 2px 5px rgba(0, 0, 0, 0.15);
 }
+
+input, textarea, select {
+  margin-bottom: 0.2rem; /* Espacio inferior para separar campos aún más */
+  padding: 0.4rem;
+  border: 1px solid #ccc;
+  border-radius: 0.25rem;
+  font-size: 0.85rem;
+}
+
+input:focus, textarea:focus, select:focus {
+  outline: none;
+  border-color: #007bff;
+  box-shadow: 0 0 0 1px rgba(0, 123, 255, 0.2);
+}
+
+.label-estilizado {
+  margin-bottom: 0.3rem; /* Espacio entre label y fecha */
+  font-size: 0.85rem;
+  font-weight: 500;
+  color: #333;
+}
+

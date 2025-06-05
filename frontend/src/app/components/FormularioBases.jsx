@@ -44,21 +44,21 @@ export default function FormularioBases({
       });
 
       if (response.ok) {
-        toast.success(baseAEditar ? '✅ Base actualizada correctamente.' : '✅ Base agregada correctamente.');
+        toast.success(baseAEditar ? ' Base actualizada correctamente.' : ' Base agregada correctamente.');
         setDescripcion('');
         onBaseAgregada && onBaseAgregada();
       } else {
         const text = await response.text();
         try {
           const data = JSON.parse(text);
-          toast.error(data.error || '❌ Error al procesar la base.');
+          toast.error(data.error || ' Error al procesar la base.');
         } catch (error) {
-          toast.error('❌ Error inesperado: ' + text);
+          toast.error(' Error inesperado: ' + text);
           console.error('Respuesta inesperada:', text);
         }
       }
     } catch (error) {
-      toast.error('❌ Error en la petición: ' + error.message);
+      toast.error(' Error en la petición: ' + error.message);
     }
   };
 

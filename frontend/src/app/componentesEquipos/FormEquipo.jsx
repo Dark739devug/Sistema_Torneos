@@ -1,250 +1,240 @@
 'use client';
-import { useState, useEffect } from 'react';
-import { fetchWithAuth } from '@/utils/auth';
 
-export default function FormEquipo({ equipo, onEquipoActualizado, onCerrar }) {
+import { useState, useEffect } from 'react';
+import { toast } from 'react-toastify';
+
+export default function FormularioEquipo({ equipo, onEquipoActualizado, onCerrar }) {
   const [formData, setFormData] = useState({
     nombre_equipo: '',
-    color_uniforme: '#000000',
-    estado_equipo: 'Pendiente',
+    color_uniforme: '',
+    estado_equipo: '',
+    creado_por: '',
     torneo: '',
-    grupo: '',
     imagen: null
   });
 
   const [torneos, setTorneos] = useState([]);
-  const [grupos, setGrupos] = useState([]);
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState('');
+  const estados = ['Activo', 'Inactivo'];
 
   useEffect(() => {
-    const fetchDatosIniciales = async () => {
+    const obtenerTorneos = async () => {
       try {
-        const [torneosRes, gruposRes] = await Promise.all([
-          fetchWithAuth('/torneos/'),
-          fetchWithAuth('/grupos/')
-        ]);
-        
-        if (!torneosRes.ok || !gruposRes.ok) {
-          throw new Error('Error al cargar datos iniciales');
+        const response = await fetch('http://127.0.0.1:8000/api/torneos/');
+        if (response.ok) {
+          const data = await response.json();
+          const torneosFiltrados = data.map((torneo) => ({
+            id: torneo.id,
+            nombre: torneo.nombre_torneo
+          }));
+          setTorneos(torneosFiltrados);
+        } else {
+          console.error('❌ Error al obtener torneos');
         }
-        
-        setTorneos(await torneosRes.json());
-        setGrupos(await gruposRes.json());
-        
-        if (equipo) {
-          setFormData({
-            nombre_equipo: equipo.nombre_equipo || '',
-            color_uniforme: equipo.color_uniforme || '#000000',
-            estado_equipo: equipo.estado_equipo || 'Pendiente',
-            torneo: equipo.torneo?.id || '',
-            grupo: equipo.grupo?.id || '',
-            imagen: null
-          });
-        }
-      } catch (err) {
-        setError(err.message);
+      } catch (error) {
+        console.error('❌ Error al obtener torneos:', error);
       }
     };
-    
-    fetchDatosIniciales();
+
+    obtenerTorneos();
+  }, []);
+
+  useEffect(() => {
+    if (equipo) {
+      setFormData({
+        nombre_equipo: equipo.nombre_equipo || '',
+        color_uniforme: equipo.color_uniforme || '',
+        estado_equipo: equipo.estado_equipo || '',
+        creado_por: equipo.creado_por || '',
+        torneo: equipo.torneo ? equipo.torneo.id : '',
+        imagen: null
+      });
+    }
   }, [equipo]);
 
   const handleChange = (e) => {
-    const { name, value, files } = e.target;
-    setFormData(prev => ({
-      ...prev,
-      [name]: files ? files[0] : value
-    }));
+    const { name, value, type, files } = e.target;
+    setFormData({
+      ...formData,
+      [name]: type === 'file' ? files[0] : value
+    });
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    setLoading(true);
-    setError('');
+
+    const formDataToSend = new FormData();
+    Object.entries(formData).forEach(([key, value]) => {
+      if (value !== null && value !== '') {
+        formDataToSend.append(key, value);
+      }
+    });
 
     try {
-      const formDataToSend = new FormData();
-      Object.entries(formData).forEach(([key, value]) => {
-        if (value !== null && value !== undefined && value !== '') {
-          formDataToSend.append(key, value);
-        }
-      });
-
-      const url = equipo ? `/equipos/${equipo.id}/` : '/equipos/';
+      const url = equipo
+        ? `http://127.0.0.1:8000/api/equipos/${equipo.id}/`
+        : 'http://127.0.0.1:8000/api/equipos/';
       const method = equipo ? 'PUT' : 'POST';
 
-      const response = await fetchWithAuth(url, {
+      const response = await fetch(url, {
         method,
         body: formDataToSend
       });
 
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.message || 'Error al guardar el equipo');
+      const text = await response.text();
+      let data;
+      try {
+        data = JSON.parse(text);
+      } catch (error) {
+        data = { error: text };
       }
 
-      onEquipoActualizado();
-      onCerrar();
-    } catch (err) {
-      setError(err.message);
-    } finally {
-      setLoading(false);
+      console.log('Respuesta del backend:', data);
+
+      if (response.ok) {
+        toast.success(data.mensaje || data.message || ' Operación exitosa.', {
+          position: 'top-center',
+          autoClose: 3000
+        });
+        onEquipoActualizado && onEquipoActualizado();
+      } else {
+        // ✅ Ajuste para mostrar errores aunque no sean arrays
+        const errores = Object.entries(data)
+          .map(([campo, mensajes]) => {
+            if (Array.isArray(mensajes)) {
+              return `${campo}: ${mensajes.join(', ')}`;
+            }
+            return `${campo}: ${mensajes}`;
+          })
+          .join('\n');
+
+        toast.error(errores || ' Ocurrió un error inesperado.', {
+          position: 'top-center',
+          autoClose: 5000
+        });
+      }
+    } catch (error) {
+      toast.error(' Error en la petición: ' + error.message, {
+        position: 'top-center',
+        autoClose: 5000
+      });
     }
   };
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
-      <div className="bg-white rounded-lg shadow-lg w-full max-w-md">
-        <div className="p-6">
-          <div className="border-b pb-4 mb-4">
-            <h2 className="text-2xl font-bold text-gray-800">
-              {equipo ? 'Editar Equipo' : 'Nuevo Equipo'}
-            </h2>
-          </div>
+    <div className="modal-formulario" style={{ position: 'relative' }}>
+      <button
+        type="button"
+        onClick={onCerrar}
+        style={{
+          position: 'absolute',
+          top: '0.5rem',
+          right: '0.5rem',
+          background: 'transparent',
+          border: 'none',
+          fontSize: '1.2rem',
+          cursor: 'pointer'
+        }}
+      >
+        &times;
+      </button>
 
-          {error && (
-            <div className="bg-red-100 border-l-4 border-red-500 text-red-700 p-3 mb-4">
-              <p>{error}</p>
-            </div>
-          )}
+      <form
+        onSubmit={handleSubmit}
+        style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}
+        encType="multipart/form-data"
+      >
+        <h2 style={{ textAlign: 'center' }}>{equipo ? 'Editar Equipo' : 'Crear Equipo'}</h2>
 
-          <form onSubmit={handleSubmit} className="space-y-4">
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Nombre del Equipo*
-              </label>
-              <input
-                type="text"
-                name="nombre_equipo"
-                value={formData.nombre_equipo}
-                onChange={handleChange}
-                className="w-full px-3 py-2 border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-blue-500"
-                required
-                disabled={loading}
-              />
-            </div>
+        <input
+          type="text"
+          name="nombre_equipo"
+          placeholder="Nombre del equipo"
+          value={formData.nombre_equipo}
+          onChange={handleChange}
+          required
+        />
 
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Color del Uniforme
-              </label>
-              <div className="flex items-center gap-2">
-                <input
-                  type="color"
-                  name="color_uniforme"
-                  value={formData.color_uniforme}
-                  onChange={handleChange}
-                  className="h-8 w-8 rounded border border-gray-300 cursor-pointer"
-                  disabled={loading}
-                />
-                <span className="text-sm">{formData.color_uniforme}</span>
-              </div>
-            </div>
+        <input
+          type="text"
+          name="color_uniforme"
+          placeholder="Color del uniforme"
+          value={formData.color_uniforme}
+          onChange={handleChange}
+          required
+        />
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Torneo*
-                </label>
-                <select
-                  name="torneo"
-                  value={formData.torneo}
-                  onChange={handleChange}
-                  className="w-full px-3 py-2 border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-blue-500"
-                  required
-                  disabled={loading}
-                >
-                  <option value="">Seleccionar...</option>
-                  {torneos.map(torneo => (
-                    <option key={torneo.id} value={torneo.id}>
-                      {torneo.nombre_torneo}
-                    </option>
-                  ))}
-                </select>
-              </div>
+        <select
+          name="estado_equipo"
+          value={formData.estado_equipo}
+          onChange={handleChange}
+          required
+        >
+          <option value="">Seleccione estado del equipo</option>
+          {estados.map((estado) => (
+            <option key={estado} value={estado}>{estado}</option>
+          ))}
+        </select>
 
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Grupo
-                </label>
-                <select
-                  name="grupo"
-                  value={formData.grupo}
-                  onChange={handleChange}
-                  className="w-full px-3 py-2 border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-blue-500"
-                  disabled={loading}
-                >
-                  <option value="">Sin grupo</option>
-                  {grupos.map(grupo => (
-                    <option key={grupo.id} value={grupo.id}>
-                      {grupo.nombre_grupo}
-                    </option>
-                  ))}
-                </select>
-              </div>
-            </div>
+        <input
+          type="text"
+          name="creado_por"
+          placeholder="Creado por"
+          value={formData.creado_por}
+          onChange={handleChange}
+          required
+        />
 
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Estado*
-              </label>
-              <select
-                name="estado_equipo"
-                value={formData.estado_equipo}
-                onChange={handleChange}
-                className="w-full px-3 py-2 border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-blue-500"
-                required
-                disabled={loading}
-              >
-                <option value="Pendiente">Pendiente</option>
-                <option value="Aprobado">Aprobado</option>
-                <option value="Rechazado">Rechazado</option>
-              </select>
-            </div>
+        <select
+          name="torneo"
+          value={formData.torneo}
+          onChange={handleChange}
+          required={!equipo} // ✅ Solo requerido si es creación
+        >
+          <option value="">Seleccione torneo</option>
+          {torneos.map((torneo) => (
+            <option key={torneo.id} value={torneo.id}>
+              {torneo.nombre}
+            </option>
+          ))}
+        </select>
 
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Logo del Equipo
-              </label>
-              <div className="flex items-center gap-2">
-                <label className="cursor-pointer bg-white py-1 px-3 border border-gray-300 rounded text-sm text-gray-700 hover:bg-gray-50">
-                  Seleccionar archivo
-                  <input
-                    type="file"
-                    name="imagen"
-                    accept="image/*"
-                    onChange={handleChange}
-                    className="hidden"
-                    disabled={loading}
-                  />
-                </label>
-                <span className="text-sm text-gray-500">
-                  {formData.imagen?.name || 'Ningún archivo seleccionado'}
-                </span>
-              </div>
-            </div>
+        <label className="label-estilizado">
+          Imagen del equipo
+          <input
+            type="file"
+            name="imagen"
+            accept="image/*"
+            onChange={handleChange}
+          />
+        </label>
 
-            <div className="flex justify-end gap-3 pt-6 border-t">
-              <button
-                type="button"
-                onClick={onCerrar}
-                className="px-4 py-2 border border-gray-300 rounded text-sm font-medium text-gray-700 bg-white hover:bg-gray-50"
-                disabled={loading}
-              >
-                Cancelar
-              </button>
-              <button
-                type="submit"
-                disabled={loading}
-                className="px-4 py-2 bg-blue-600 text-white rounded text-sm font-medium hover:bg-blue-700"
-              >
-                {loading ? 'Guardando...' : equipo ? 'Actualizar' : 'Crear'}
-              </button>
-            </div>
-          </form>
+        <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+          <button
+            type="submit"
+            style={{
+              background: '#007bff',
+              color: '#fff',
+              border: 'none',
+              borderRadius: '4px',
+              padding: '0.4rem 0.75rem'
+            }}
+          >
+            {equipo ? 'Actualizar' : 'Crear'}
+          </button>
+          <button
+            type="button"
+            onClick={onCerrar}
+            style={{
+              background: '#ccc',
+              border: 'none',
+              borderRadius: '4px',
+              padding: '0.4rem 0.75rem'
+            }}
+          >
+            Cancelar
+          </button>
         </div>
-      </div>
+      </form>
     </div>
   );
 }

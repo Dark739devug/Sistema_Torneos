@@ -24,9 +24,7 @@ const Navbar = () => {
       <div className="navbar-container">
         <img src="/logoumes.png" width="70" height={70} />
 
-        <span className={`${germania.className} text-white text-6xl ml-2`}>
-          LigaPro
-        </span>
+       <img src="/Ligapro.png" width="160" height={80} className="logo" />  
 
         {/* Solo se muestran los links si no está logeado */}
         {!isLoggedIn && (

@@ -1,32 +1,33 @@
-from rest_framework import viewsets, permissions
-from .models import ( Usuario,Torneo, Grupo, AvanceFase, Jornada, Calendario, Horario,
-                     CalendarioHorario, Equipo, Cancha, Partido,
-                     Inscripcion, Participante, Tarjeta, HistorialSuspension,
-                     Resultado, Goleador, TablaPosiciones, HistorialCambiosResultado, BasesTorneo)
-
-from .serializers import ( CustomTokenObtainPairSerializer,BasesTorneoSerializer, AvanceFaseSerializer, TorneoSerializer, GrupoSerializer,
-                          JornadaSerializer, CalendarioSerializer, HorarioSerializer,
-                          CalendarioHorarioSerializer, EquipoSerializer, CanchaSerializer,
-                          PartidoSerializer, InscripcionSerializer, ParticipanteSerializer,
-                          TarjetaSerializer, HistorialCambiosResultado, ResultadoSerializer,
-                          GoleadorSerializer, HistorialSuspensionSerializer, TablaPosicionesSerializer, HistorialCambiosResultadoSerializer)    
-
-
+from rest_framework import viewsets, permissions, filters, status
+from rest_framework.views import APIView
+from rest_framework.response import Response
+from rest_framework.parsers import MultiPartParser, FormParser
 from rest_framework_simplejwt.views import TokenObtainPairView
+from django.contrib.auth.hashers import make_password
+from django.utils import timezone
+from django.db import OperationalError, connection
+from django.db.utils import OperationalError
 
+from .models import (
+    Usuario, Torneo, Grupo, AvanceFase, Jornada, Calendario, Horario,
+    CalendarioHorario, Equipo, Cancha, Partido, Inscripcion, Participante,
+    Tarjeta, HistorialSuspension, Resultado, Goleador, TablaPosiciones,
+    HistorialCambiosResultado, BasesTorneo
+)
+from .serializers import (
+    CustomTokenObtainPairSerializer, BasesTorneoSerializer, AvanceFaseSerializer,
+    TorneoSerializer, GrupoSerializer, JornadaSerializer, CalendarioSerializer,
+    HorarioSerializer, CalendarioHorarioSerializer, EquipoSerializer,
+    CanchaSerializer, PartidoSerializer, InscripcionSerializer,
+    ParticipanteSerializer, TarjetaSerializer, ResultadoSerializer,
+    GoleadorSerializer, HistorialSuspensionSerializer, TablaPosicionesSerializer,
+    HistorialCambiosResultadoSerializer
+)
 
 
 class CustomTokenObtainPairView(TokenObtainPairView):
     serializer_class = CustomTokenObtainPairSerializer
 
-from rest_framework.views import APIView
-from rest_framework.response import Response
-from rest_framework import status
-from rest_framework.views import APIView
-from django.contrib.auth.hashers import make_password
-from rest_framework import viewsets, filters, status
-from rest_framework.response import Response
-from django.db import OperationalError
 
 class RegistroUsuarioAPIView(APIView):
     def post(self, request):
@@ -61,7 +62,14 @@ class TorneoViewSet(viewsets.ModelViewSet):
         serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         try:
+            # 🔹 Guardamos el torneo normalmente
             self.perform_create(serializer)
+            id_torneo = serializer.instance.id  # ✅ Usamos 'id' en lugar de 'id_torneo'
+
+            # 🔹 Llamamos al procedimiento almacenado para crear los grupos automáticamente
+            with connection.cursor() as cursor:
+                cursor.callproc('CrearGruposParaTorneoSeguro', [id_torneo])
+
         except OperationalError as e:
             error_msg = str(e)
             if 'La fecha de fin no puede ser anterior' in error_msg:
@@ -73,7 +81,7 @@ class TorneoViewSet(viewsets.ModelViewSet):
         headers = self.get_success_headers(serializer.data)
         return Response(
             {
-                'mensaje': '✅ Registro exitoso.',
+                'mensaje': '✅ Torneo registrado y grupos generados automáticamente.',
                 'torneo': serializer.data
             },
             status=status.HTTP_201_CREATED,
@@ -102,7 +110,6 @@ class TorneoViewSet(viewsets.ModelViewSet):
             },
             status=status.HTTP_200_OK
         )
-
 
 
 class BasesTorneoViewSet(viewsets.ModelViewSet):
@@ -151,8 +158,105 @@ class CalendarioHorarioViewSet(viewsets.ModelViewSet):
 class EquipoViewSet(viewsets.ModelViewSet):
     queryset = Equipo.objects.all()
     serializer_class = EquipoSerializer
-    permission_classes = [permissions.AllowAny]
+    filter_backends = [filters.SearchFilter]
+    search_fields = ['nombre_equipo', 'color_uniforme', 'estado_equipo']
+    parser_classes = (MultiPartParser, FormParser)
 
+    def perform_create(self, serializer):
+        torneo_id = self.request.data.get('torneo')
+        if not torneo_id:
+            raise ValidationError({'torneo': 'Debe indicar el torneo'})
+
+        try:
+            torneo = Torneo.objects.get(pk=torneo_id)
+        except Torneo.DoesNotExist:
+            raise ValidationError({'torneo': 'Torneo no encontrado'})
+
+        # Verificar máximo de equipos permitidos
+        equipos_existentes = Equipo.objects.filter(torneo=torneo).count()
+        if equipos_existentes >= torneo.maximo_equipos:
+            raise ValidationError({'error': 'Se alcanzó el máximo de equipos permitidos para este torneo'})
+
+        # Asignar grupo dinámicamente
+        grupos = list(Grupo.objects.filter(torneo=torneo).order_by('id'))
+        if not grupos:
+            raise ValidationError({'error': 'No hay grupos definidos para este torneo'})
+
+        grupo_index = equipos_existentes % len(grupos)
+        grupo_asignado = grupos[grupo_index]
+
+        # Crear el equipo
+        equipo = serializer.save(
+            torneo=torneo,
+            grupo=grupo_asignado,
+            fecha_creacion=timezone.now(),
+            fecha_modificacion=timezone.now()
+        )
+
+        # Crear inscripción asociada
+        Inscripcion.objects.create(
+            equipo=equipo,
+            estado='Pendiente',
+            fecha_solicitud=timezone.now()
+        )
+
+    def perform_update(self, serializer):
+        serializer.save(
+            fecha_modificacion=timezone.now()
+        )
+        
+from rest_framework import generics
+from rest_framework.exceptions import ValidationError
+
+
+from rest_framework import generics
+from rest_framework.exceptions import ValidationError
+from .models import Equipo, Grupo, Torneo
+from .serializers import EquipoSerializer
+
+class EquipoViewSet(viewsets.ModelViewSet):
+    queryset = Equipo.objects.all()
+    serializer_class = EquipoSerializer
+    filter_backends = [filters.SearchFilter]
+    search_fields = ['nombre_equipo', 'color_uniforme', 'estado_equipo']
+    parser_classes = (MultiPartParser, FormParser)
+
+    def perform_create(self, serializer):
+        torneo_id = self.request.data.get('torneo')
+        if not torneo_id:
+            raise ValidationError({'torneo': 'Debe indicar el torneo'})
+
+        try:
+            torneo = Torneo.objects.get(pk=torneo_id)
+        except Torneo.DoesNotExist:
+            raise ValidationError({'torneo': 'Torneo no encontrado'})
+
+        # Verificar el máximo de equipos permitidos
+        equipos_existentes = Equipo.objects.filter(torneo=torneo).count()
+        if equipos_existentes >= torneo.maximo_equipos:
+            raise ValidationError({'error': 'Se alcanzó el máximo de equipos permitidos para este torneo'})
+
+        # Asignar el grupo correspondiente
+        grupos = list(Grupo.objects.filter(torneo=torneo).order_by('id'))
+        if not grupos:
+            raise ValidationError({'error': 'No hay grupos definidos para este torneo'})
+
+        grupo_index = equipos_existentes % torneo.numero_grupos
+        grupo_asignado = grupos[grupo_index]
+
+        serializer.save(
+            torneo=torneo,  # ✅ Asigna el torneo correctamente
+            grupo=grupo_asignado,
+            fecha_creacion=timezone.now(),
+            fecha_modificacion=timezone.now()
+        )
+
+    def perform_update(self, serializer):
+        serializer.save(
+            fecha_modificacion=timezone.now()
+        )
+
+        
 class CanchaViewSet(viewsets.ModelViewSet):
     queryset = Cancha.objects.all()
     serializer_class = CanchaSerializer
@@ -167,6 +271,38 @@ class InscripcionViewSet(viewsets.ModelViewSet):
     queryset = Inscripcion.objects.all()
     serializer_class = InscripcionSerializer
     permission_classes = [permissions.AllowAny]
+
+    def perform_create(self, serializer):
+        equipo = serializer.validated_data.get('equipo')
+        # Verifica cuántas inscripciones existen para este equipo
+        inscripciones_count = Inscripcion.objects.filter(equipo=equipo).count()
+        if inscripciones_count >= 2:
+            raise ValidationError({'error': '❌ Este equipo ya tiene 2 inscripciones.'})
+
+        # Asigna automáticamente el estado y la fecha
+        serializer.save(
+            estado='Pendiente',
+            fecha_solicitud=timezone.now()
+        )
+
+    def create(self, request, *args, **kwargs):
+        response = super().create(request, *args, **kwargs)
+        data = response.data
+        data['mensaje'] = '✅ Inscripción creada correctamente'
+        return Response(data, status=status.HTTP_201_CREATED)
+    
+    queryset = Inscripcion.objects.all()
+    serializer_class = InscripcionSerializer
+    permission_classes = [permissions.AllowAny]
+
+    def perform_create(self, serializer):
+        serializer.save(estado='Pendiente')
+
+    def create(self, request, *args, **kwargs):
+        response = super().create(request, *args, **kwargs)
+        data = response.data
+        data['mensaje'] = '✅ Inscripción creada correctamente'
+        return Response(data, status=status.HTTP_201_CREATED)
 
 class ParticipanteViewSet(viewsets.ModelViewSet):
     queryset = Participante.objects.all()

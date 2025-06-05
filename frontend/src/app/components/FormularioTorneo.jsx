@@ -50,19 +50,9 @@ export default function FormularioTorneo({ torneo, onTorneoActualizado, onCerrar
     e.preventDefault();
 
     const formDataToSend = new FormData();
-    formDataToSend.append('nombre_torneo', formData.nombre_torneo);
-    formDataToSend.append('fecha_inicio', formData.fecha_inicio);
-    formDataToSend.append('fecha_fin', formData.fecha_fin);
-    formDataToSend.append('descripcion_torneo', formData.descripcion_torneo);
-    formDataToSend.append('maximo_equipos', formData.maximo_equipos);
-    formDataToSend.append('numero_grupos', formData.numero_grupos);
-    formDataToSend.append('fase_actual', formData.fase_actual);
-    formDataToSend.append('creado_por', formData.creado_por);
-    formDataToSend.append('fecha_inicio_inscripcion', formData.fecha_inicio_inscripcion);
-    formDataToSend.append('fecha_fin_inscripcion', formData.fecha_fin_inscripcion);
-    if (formData.imagen) {
-      formDataToSend.append('imagen', formData.imagen);
-    }
+    Object.entries(formData).forEach(([key, value]) => {
+      if (value) formDataToSend.append(key, value);
+    });
 
     try {
       const url = torneo
@@ -73,9 +63,7 @@ export default function FormularioTorneo({ torneo, onTorneoActualizado, onCerrar
       const response = await fetch(url, {
         method,
         body: formDataToSend,
-        headers: {
-          Accept: 'application/json'
-        }
+        headers: { Accept: 'application/json' }
       });
 
       const text = await response.text();
@@ -86,30 +74,22 @@ export default function FormularioTorneo({ torneo, onTorneoActualizado, onCerrar
         data = { error: text };
       }
 
-      console.log('Respuesta del backend:', data); // 👈 Agrega esto para depurar
+      console.log('Respuesta del backend:', data);
 
       if (response.ok) {
-        toast.success(
-          data.mensaje || data.message || '✅ Operación exitosa.',
-          {
-            position: 'top-center',
-            autoClose: 3000
-          }
-        );
+        toast.success(data.mensaje || data.message || ' Operación exitosa.', {
+          position: 'top-center',
+          autoClose: 3000
+        });
         onTorneoActualizado && onTorneoActualizado();
-        // Opcional: cerrar el formulario tras éxito
-        // setTimeout(() => { onCerrar && onCerrar(); }, 1000);
       } else {
-        toast.error(
-          data.error || data.detail || '❌ Ocurrió un error inesperado.',
-          {
-            position: 'top-center',
-            autoClose: 5000
-          }
-        );
+        toast.error(data.error || data.detail || ' Ocurrió un error inesperado.', {
+          position: 'top-center',
+          autoClose: 5000
+        });
       }
     } catch (error) {
-      toast.error('❌ Error en la petición: ' + error.message, {
+      toast.error(' Error en la petición: ' + error.message, {
         position: 'top-center',
         autoClose: 5000
       });
@@ -117,7 +97,7 @@ export default function FormularioTorneo({ torneo, onTorneoActualizado, onCerrar
   };
 
   return (
-    <div style={{ position: 'relative' }}>
+    <div className="modal-formulario" style={{ position: 'relative' }}>
       <button
         type="button"
         onClick={onCerrar}
@@ -127,7 +107,7 @@ export default function FormularioTorneo({ torneo, onTorneoActualizado, onCerrar
           right: '0.5rem',
           background: 'transparent',
           border: 'none',
-          fontSize: '1.5rem',
+          fontSize: '1.2rem',
           cursor: 'pointer'
         }}
       >
@@ -136,101 +116,58 @@ export default function FormularioTorneo({ torneo, onTorneoActualizado, onCerrar
 
       <form
         onSubmit={handleSubmit}
-        style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}
+        style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }} // Aumentado gap aquí
       >
-        <h2>{torneo ? 'Editar Torneo' : 'Crear Torneo'}</h2>
+        <h2 style={{ textAlign: 'center' }}>{torneo ? 'Editar Torneo' : 'Crear Torneo'}</h2>
 
-        <input
-          type="text"
-          name="nombre_torneo"
-          placeholder="Nombre del torneo"
-          value={formData.nombre_torneo}
-          onChange={handleChange}
-          required
-        />
-        <input
-          type="date"
-          name="fecha_inicio"
-          value={formData.fecha_inicio}
-          onChange={handleChange}
-          required
-        />
-        <input
-          type="date"
-          name="fecha_fin"
-          value={formData.fecha_fin}
-          onChange={handleChange}
-          required
-        />
-        <textarea
-          name="descripcion_torneo"
-          placeholder="Descripción"
-          value={formData.descripcion_torneo}
-          onChange={handleChange}
-          rows={3}
-          required
-        />
-        <input
-          type="number"
-          name="maximo_equipos"
-          placeholder="Máximo de equipos"
-          value={formData.maximo_equipos}
-          onChange={handleChange}
-          required
-        />
-        <input
-          type="number"
-          name="numero_grupos"
-          placeholder="Número de grupos"
-          value={formData.numero_grupos}
-          onChange={handleChange}
-          required
-        />
-        <select
-          name="fase_actual"
-          value={formData.fase_actual}
-          onChange={handleChange}
-          required
-        >
+        <input type="text" name="nombre_torneo" placeholder="Nombre del torneo" value={formData.nombre_torneo} onChange={handleChange} required />
+
+        <label className="label-estilizado">
+          Fecha de inicio Torneo
+          <input type="date" name="fecha_inicio" value={formData.fecha_inicio} onChange={handleChange} required />
+        </label>
+
+        <label className="label-estilizado">
+          Fecha de Fin Torneo
+          <input type="date" name="fecha_fin" value={formData.fecha_fin} onChange={handleChange} required />
+        </label>
+
+        <textarea name="descripcion_torneo" placeholder="Descripción" value={formData.descripcion_torneo} onChange={handleChange} rows={3} required />
+
+        <input type="number" name="maximo_equipos" placeholder="Máximo de equipos" value={formData.maximo_equipos} onChange={handleChange} required />
+
+        <input type="number" name="numero_grupos" placeholder="Número de grupos" value={formData.numero_grupos} onChange={handleChange} required />
+
+        <select name="fase_actual" value={formData.fase_actual} onChange={handleChange} required>
           <option value="">Seleccione la fase actual</option>
           {fases.map((fase) => (
             <option key={fase} value={fase}>{fase}</option>
           ))}
         </select>
-        <input
-          type="text"
-          name="creado_por"
-          placeholder="Nombre del usuario que crea el torneo"
-          value={formData.creado_por}
-          onChange={handleChange}
-          required
-        />
-        <input
-          type="file"
-          name="imagen"
-          accept="image/*"
-          onChange={handleChange}
-        />
-        <input
-          type="date"
-          name="fecha_inicio_inscripcion"
-          value={formData.fecha_inicio_inscripcion}
-          onChange={handleChange}
-        />
-        <input
-          type="date"
-          name="fecha_fin_inscripcion"
-          value={formData.fecha_fin_inscripcion}
-          onChange={handleChange}
-        />
 
-        <div>
-          <button type="submit">{torneo ? 'Actualizar' : 'Crear'}</button>
-          <button type="button" onClick={onCerrar}>Cancelar</button>
+        <input type="text" name="creado_por" placeholder="Creado por" value={formData.creado_por} onChange={handleChange} required />
+
+        <input type="file" name="imagen" accept="image/*" onChange={handleChange} />
+
+        <label className="label-estilizado">
+          Fecha de inicio de inscripción
+          <input type="date" name="fecha_inicio_inscripcion" value={formData.fecha_inicio_inscripcion} onChange={handleChange} />
+        </label>
+
+        <label className="label-estilizado">
+          Fecha de fin de inscripción
+          <input type="date" name="fecha_fin_inscripcion" value={formData.fecha_fin_inscripcion} onChange={handleChange} />
+        </label>
+
+        <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+          <button type="submit" style={{ background: '#007bff', color: '#fff', border: 'none', borderRadius: '4px', padding: '0.4rem 0.75rem' }}>
+            {torneo ? 'Actualizar' : 'Crear'}
+          </button>
+          <button type="button" onClick={onCerrar} style={{ background: '#ccc', border: 'none', borderRadius: '4px', padding: '0.4rem 0.75rem' }}>
+            Cancelar
+          </button>
         </div>
       </form>
-
-     
     </div>
   );
 }
