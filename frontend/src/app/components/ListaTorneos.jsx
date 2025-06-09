@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { FaTrophy, FaUsers, FaCalendarAlt, FaEdit, FaTrash } from 'react-icons/fa';
+import { fetchWithAuth } from '@/utils/auth';
 
 export default function ListaTorneos({ recargar, onEditar }) {
   const [torneos, setTorneos] = useState([]);
@@ -9,13 +10,9 @@ export default function ListaTorneos({ recargar, onEditar }) {
 
   const cargarTorneos = async () => {
     try {
-      const response = await fetch('http://127.0.0.1:8000/api/torneos/');
-      if (response.ok) {
-        const data = await response.json();
-        setTorneos(data);
-      } else {
-        setMensaje('❌ Error al obtener la lista de torneos');
-      }
+      const response = await fetchWithAuth('/api/torneos/');
+      const data = await response.json();
+      setTorneos(data);
     } catch (error) {
       console.error('❌ Error:', error);
       setMensaje('❌ Error: ' + error.message);
@@ -25,7 +22,7 @@ export default function ListaTorneos({ recargar, onEditar }) {
   const eliminarTorneo = async (id) => {
     if (!confirm('¿Seguro que deseas eliminar este torneo?')) return;
     try {
-      const response = await fetch(`http://127.0.0.1:8000/api/torneos/${id}/`, {
+      const response = await fetchWithAuth(`/api/torneos/${id}/`, {
         method: 'DELETE'
       });
       if (response.ok) {
@@ -91,6 +88,4 @@ export default function ListaTorneos({ recargar, onEditar }) {
     </div>
   );
 }
-
-
 

@@ -1,4 +1,3 @@
-
 from .models import (Usuario, Torneo,AvanceFase, Grupo, Jornada, Calendario, Horario,
                     CalendarioHorario, Equipo, Cancha, Partido,
                     Inscripcion, Participante, Tarjeta, HistorialSuspension,
@@ -121,9 +120,17 @@ class ResultadoSerializer(serializers.ModelSerializer):
         fields = '__all__'
 
 class GoleadorSerializer(serializers.ModelSerializer):
+    participante_carnet = serializers.CharField(source='participante.carnet', read_only=True)
+    participante_nombre = serializers.CharField(source='participante.nombre', read_only=True)
+    # Si el equipo está relacionado a través del participante:
+    equipo_nombre = serializers.CharField(source='participante.equipo.nombre', read_only=True)
+
     class Meta:
         model = Goleador
-        fields = '__all__'
+        fields = [
+            'id', 'participante', 'participante_carnet', 'participante_nombre',
+            'goles', 'equipo_nombre'
+        ]
 
 class TablaPosicionesSerializer(serializers.ModelSerializer):
     class Meta:

@@ -17,7 +17,7 @@ export default function ListaEquipos() {
   const cargarEquipos = async () => {
     setLoading(true);
     try {
-      const response = await fetchWithAuth('/api/equipos/');
+      const response = await fetchWithAuth('/equipos/');
       if (!response.ok) {
         throw new Error('Error al cargar equipos');
       }

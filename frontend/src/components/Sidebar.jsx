@@ -24,7 +24,8 @@ const routes = [
   { name: 'Calendario', path: '/dashboard/calendario', icon: iconos.calendario },
   { name: 'Registro de Equipos', path: '/dashboard/registroEquipos', icon: iconos.registroEquipos },
   { name: 'Resultados', path: '/dashboard/resultados', icon: iconos.resultados },
-  { name: 'Tabla de Posiciones', path: '/dashboard/tablaPosiciones', icon: iconos.tablaPosiciones }
+  { name: 'Tabla de Posiciones', path: '/dashboard/tablaPosiciones', icon: iconos.tablaPosiciones },
+  { name: 'Estadísticas', path: '/dashboard/estadisticas', icon: <FaClipboardList /> }  // ✅ Nuevo ítem
 ];
 
 const Sidebar = () => {

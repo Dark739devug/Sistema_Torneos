@@ -2,8 +2,12 @@
 
 import { useState, useContext } from 'react';
 import { useRouter } from 'next/navigation';
-import styles from './LoginForm.module.css';
 import { AuthContext } from '@/context/AuthContext';
+import Cookies from 'js-cookie';
+import { toast, ToastContainer } from 'react-toastify'; // 👈 Importa el toast y contenedor
+
+import 'react-toastify/dist/ReactToastify.css';
+import styles from './LoginForm.module.css';
 
 export default function LoginForm() {
   const [formData, setFormData] = useState({
@@ -11,7 +15,6 @@ export default function LoginForm() {
     contrasena: ''
   });
 
-  const [message, setMessage] = useState('');
   const router = useRouter();
   const { login } = useContext(AuthContext);
 
@@ -41,52 +44,64 @@ export default function LoginForm() {
 
       const data = await response.json();
 
-      // Asegúrate de que el backend envía el nombre del usuario en la respuesta
-      // Ejemplo de respuesta: { access, refresh, usuario: { nombre: "Juan Pérez" } }
-      if (response.ok && data.access && data.refresh && data.usuario && data.usuario.nombre) {
-        // Guarda solo el nombre del usuario en localStorage
-        localStorage.setItem('usuario', data.usuario.nombre);
+      // ✅ Ajustamos los campos que devuelve tu backend
+      if (response.ok && data.access && data.refresh && data.nombre) {
+        // Guarda el nombre y rol en localStorage (si quieres)
+        localStorage.setItem('usuario', data.nombre);
+        localStorage.setItem('rol', data.rol);
 
-        // Llama al login del AuthContext para manejar los tokens
+        // Llama al login del AuthContext
         login(data);
 
-        setMessage('Inicio de sesión exitoso');
-        router.push('/dashboard'); // Redirige al dashboard o la ruta que necesites
+        // Guarda el token en la cookie
+        Cookies.set('token', data.access, {
+          expires: 1,
+          path: '/',
+          sameSite: 'strict'
+        });
+
+        // Muestra el toast de éxito
+        toast.success('✅ Inicio de sesión exitoso', { position: 'top-center' });
+
+        // Redirige al dashboard
+        router.push('/dashboard');
       } else {
         const errorMsg = data.detail || data.error || 'Credenciales inválidas';
-        setMessage(errorMsg);
+        toast.error(errorMsg, { position: 'top-center' });
       }
     } catch (error) {
       console.error('Error al iniciar sesión:', error);
-      setMessage('Ocurrió un error. Intenta nuevamente.');
+      toast.error('❌ Ocurrió un error. Intenta nuevamente.', { position: 'top-center' });
     }
   };
 
   return (
-    <form onSubmit={handleSubmit} className={styles.formContainer}>
-      <h2 className={styles.title}>Iniciar Sesión</h2>
-      <input
-        type="email"
-        name="correo"
-        placeholder="Correo electrónico"
-        value={formData.correo}
-        onChange={handleChange}
-        required
-        className={styles.input}
-      />
-      <input
-        type="password"
-        name="contrasena"
-        placeholder="Contraseña"
-        value={formData.contrasena}
-        onChange={handleChange}
-        required
-        className={styles.input}
-      />
-      <button type="submit" className={styles.button}>Iniciar sesión</button>
-      {message && <p className={styles.message}>{message}</p>}
-    </form>
+    <>
+      <form onSubmit={handleSubmit} className={styles.formContainer}>
+        <h2 className={styles.title}>Iniciar Sesión</h2>
+        <input
+          type="email"
+          name="correo"
+          placeholder="Correo electrónico"
+          value={formData.correo}
+          onChange={handleChange}
+          required
+          className={styles.input}
+        />
+        <input
+          type="password"
+          name="contrasena"
+          placeholder="Contraseña"
+          value={formData.contrasena}
+          onChange={handleChange}
+          required
+          className={styles.input}
+        />
+        <button type="submit" className={styles.button}>Iniciar sesión</button>
+      </form>
+
+      {/* ToastContainer para mostrar los mensajes */}
+      <ToastContainer position="top-center" autoClose={3000} />
+    </>
   );
 }
-
-

@@ -23,7 +23,7 @@ from .views import ( CustomTokenObtainPairView,
     GoleadorViewSet,
     TablaPosicionesViewSet,
     HistorialCambiosResultadoViewSet,
-    
+    ParticipanteEstadoViewSet,
 )
 
 router = DefaultRouter()
@@ -45,6 +45,7 @@ router.register('resultados', ResultadoViewSet)
 router.register('goleadores', GoleadorViewSet)
 router.register('tabla-posiciones', TablaPosicionesViewSet)
 router.register('historial-cambios-resultado', HistorialCambiosResultadoViewSet)
+router.register(r'participantes-estado', ParticipanteEstadoViewSet, basename='participante-estado')
 
 urlpatterns = [
     path('', include(router.urls)),
