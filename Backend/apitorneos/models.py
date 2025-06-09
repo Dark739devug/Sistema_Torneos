@@ -1,8 +1,6 @@
 from django.db import models
-
-from django.contrib.auth.models import BaseUserManager
 from django.utils import timezone
-
+from django.contrib.auth.models import AbstractBaseUser, PermissionsMixin, BaseUserManager
 
 class UsuarioManager(BaseUserManager):
     def create_user(self, correo, nombre, password=None, nombre_rol='Estudiante'):
@@ -29,11 +27,6 @@ class UsuarioManager(BaseUserManager):
         usuario.is_superuser = True
         usuario.save(using=self._db)
         return usuario
-
-
-
-from django.contrib.auth.models import AbstractBaseUser, PermissionsMixin
-
 
 class Usuario(AbstractBaseUser, PermissionsMixin):
     id = models.AutoField(primary_key=True)

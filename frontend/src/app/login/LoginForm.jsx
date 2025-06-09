@@ -1,10 +1,11 @@
 'use client';
 
-import { useState, useContext } from 'react';
+import { useState, useContext, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { AuthContext } from '@/context/AuthContext';
 import Cookies from 'js-cookie';
 import { toast } from 'react-toastify';
+
 import styles from './LoginForm.module.css';
 
 export default function LoginForm() {
@@ -15,6 +16,12 @@ export default function LoginForm() {
 
   const router = useRouter();
   const { login } = useContext(AuthContext);
+
+  // ✅ Asegura que este código solo se ejecute en el cliente
+  const [isClient, setIsClient] = useState(false);
+  useEffect(() => {
+    setIsClient(true);
+  }, []);
 
   const handleChange = (e) => {
     setFormData({
@@ -42,26 +49,21 @@ export default function LoginForm() {
 
       const data = await response.json();
 
-      // ✅ Ajustamos los campos que devuelve tu backend
       if (response.ok && data.access && data.refresh && data.nombre) {
-        // Guarda el nombre y rol en localStorage (si quieres)
-        localStorage.setItem('usuario', data.nombre);
-        localStorage.setItem('rol', data.rol);
+        if (isClient) {
+          localStorage.setItem('usuario', data.nombre);
+          localStorage.setItem('rol', data.rol);
+        }
 
-        // Llama al login del AuthContext
         login(data);
 
-        // Guarda el token en la cookie
         Cookies.set('token', data.access, {
           expires: 1,
           path: '/',
           sameSite: 'strict'
         });
 
-        // Muestra el toast de éxito
         toast.success('✅ Inicio de sesión exitoso', { position: 'top-center' });
-
-        // Redirige al dashboard
         router.push('/dashboard');
       } else {
         const errorMsg = data.detail || data.error || 'Credenciales inválidas';
@@ -97,11 +99,8 @@ export default function LoginForm() {
         />
         <button type="submit" className={styles.button}>Iniciar sesión</button>
       </form>
-
-  
     </>
   );
 }
-
 
 

@@ -1,12 +1,14 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+
 import { FaTrophy, FaUsers, FaCalendarAlt, FaEdit, FaTrash, FaSearch, FaPlus, FaFutbol } from 'react-icons/fa';
 import { toast } from 'react-toastify';
 
 import FormularioBases from './FormularioBases';
 import GenerarPartidosForm from "./GenerarPartidosForm";
 import GenerarJornadasForm from "./GenerarJornadasForm";
+
 
 export default function ListaTorneos({ recargar, onEditar }) {
   const [torneos, setTorneos] = useState([]);
@@ -19,6 +21,7 @@ export default function ListaTorneos({ recargar, onEditar }) {
 
   const cargarTorneos = async () => {
     try {
+
       const response = await fetch(`http://127.0.0.1:8000/api/torneos/?search=${query}`);
       if (response.ok) {
         const data = await response.json();
@@ -26,6 +29,7 @@ export default function ListaTorneos({ recargar, onEditar }) {
       } else {
         toast.error(' Error al obtener la lista de torneos.');
       }
+
     } catch (error) {
       console.error(' Error:', error);
       toast.error(' Error: ' + error.message);
@@ -35,7 +39,7 @@ export default function ListaTorneos({ recargar, onEditar }) {
   const eliminarTorneo = async (id) => {
     if (!confirm('¿Seguro que deseas eliminar este torneo?')) return;
     try {
-      const response = await fetch(`http://127.0.0.1:8000/api/torneos/${id}/`, {
+      const response = await fetchWithAuth(`/api/torneos/${id}/`, {
         method: 'DELETE'
       });
       if (response.ok) {

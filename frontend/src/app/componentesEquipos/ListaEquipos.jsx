@@ -14,7 +14,6 @@ export default function ListaEquipos({ recargar }) {
   const [inscripciones, setInscripciones] = useState({});
   const [estadosInscripcion, setEstadosInscripcion] = useState({});
 
-  // Cargar equipos e inscripciones existentes
   const cargarEquipos = async () => {
     try {
       const response = await fetch(`http://127.0.0.1:8000/api/equipos/?search=${query}`);
@@ -30,23 +29,17 @@ export default function ListaEquipos({ recargar }) {
     }
   };
 
-  // Cargar todas las inscripciones existentes
   const cargarInscripciones = async () => {
     try {
       const response = await fetch('http://127.0.0.1:8000/api/inscripciones/');
       if (response.ok) {
         const data = await response.json();
-        
-        // Crear un objeto con los IDs de equipos inscritos
         const inscripcionesMap = {};
-        // Crear un objeto con los estados de inscripción
         const estadosMap = {};
-        
         data.forEach(inscripcion => {
           inscripcionesMap[inscripcion.equipo] = true;
           estadosMap[inscripcion.equipo] = inscripcion.estado;
         });
-        
         setInscripciones(inscripcionesMap);
         setEstadosInscripcion(estadosMap);
       } else {
@@ -57,6 +50,7 @@ export default function ListaEquipos({ recargar }) {
     }
   };
 
+  // ✅ Modificado para que al inscribir, desaparezca el equipo de la lista
   const crearInscripcion = async (equipoId) => {
     try {
       const response = await fetch('http://127.0.0.1:8000/api/inscripciones/', {
@@ -74,12 +68,11 @@ export default function ListaEquipos({ recargar }) {
 
       if (response.ok) {
         toast.success('✅ Inscripción creada correctamente.', { position: 'top-center' });
-        // Actualizar estado para marcar este equipo como inscrito
+        setEquipos((prev) => prev.filter((e) => e.id !== equipoId)); 
         setInscripciones(prev => ({
           ...prev,
           [equipoId]: true
         }));
-        // Actualizar estado de la inscripción
         setEstadosInscripcion(prev => ({
           ...prev,
           [equipoId]: data.estado
@@ -102,13 +95,11 @@ export default function ListaEquipos({ recargar }) {
       });
       if (response.ok) {
         setEquipos((prev) => prev.filter((e) => e.id !== id));
-        // Si el equipo eliminado estaba inscrito, lo quitamos del estado
         setInscripciones(prev => {
           const newInscripciones = { ...prev };
           delete newInscripciones[id];
           return newInscripciones;
         });
-        // También eliminamos su estado de inscripción
         setEstadosInscripcion(prev => {
           const newEstados = { ...prev };
           delete newEstados[id];
@@ -130,9 +121,8 @@ export default function ListaEquipos({ recargar }) {
     setModoFormulario('editar');
   };
 
-  // Función para determinar el color según el estado
   const getEstadoColor = (estado) => {
-    switch(estado) {
+    switch (estado) {
       case 'Aprobada':
         return 'green';
       case 'Pendiente':
@@ -149,7 +139,6 @@ export default function ListaEquipos({ recargar }) {
       await cargarEquipos();
       await cargarInscripciones();
     };
-    
     cargarDatos();
   }, [recargar, query]);
 
@@ -180,7 +169,6 @@ export default function ListaEquipos({ recargar }) {
             }}
           >
             <div style={{ display: 'flex', gap: '1rem', flexWrap: 'wrap' }}>
-              {/* Imagen */}
               <div style={{ flex: '0 0 200px' }}>
                 {equipo.imagen ? (
                   <img
@@ -210,7 +198,6 @@ export default function ListaEquipos({ recargar }) {
                 )}
               </div>
 
-              {/* Descripción */}
               <div style={{ flex: 1 }}>
                 <h3>
                   <FaUsers style={{ marginRight: '0.5rem' }} />
@@ -236,7 +223,6 @@ export default function ListaEquipos({ recargar }) {
                 </div>
               </div>
 
-              {/* Grupo asignado + Inscripción */}
               <div style={{
                 flex: '0 0 200px',
                 display: 'flex',
@@ -244,12 +230,9 @@ export default function ListaEquipos({ recargar }) {
                 gap: '0.5rem'
               }}>
                 <p><strong>Grupo asignado:</strong> {equipo.grupo ? equipo.grupo.nombre_grupo : 'No asignado'}</p>
-
-                {/* Verificar si el equipo está inscrito */}
                 {inscripciones[equipo.id] ? (
                   <div>
-                    <p style={{ color: 'green', fontWeight: 'bold' }}>✅ Inscripcion enviada</p>
-                    {/* Nueva línea con el estado de la inscripción */}
+                    <p style={{ color: 'green', fontWeight: 'bold' }}>✅ Inscripción enviada</p>
                     <p>
                       Estado: 
                       <span style={{ 
@@ -299,6 +282,7 @@ export default function ListaEquipos({ recargar }) {
           </li>
         ))}
       </ul>
+
     </div>
   );
 }

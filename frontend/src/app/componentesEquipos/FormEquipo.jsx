@@ -7,14 +7,12 @@ export default function FormularioEquipo({ equipo, onEquipoActualizado, onCerrar
   const [formData, setFormData] = useState({
     nombre_equipo: '',
     color_uniforme: '',
-    estado_equipo: '',
     creado_por: '',
     torneo: '',
     imagen: null
   });
 
   const [torneos, setTorneos] = useState([]);
-  const estados = ['Activo', 'Inactivo'];
 
   useEffect(() => {
     const obtenerTorneos = async () => {
@@ -43,7 +41,6 @@ export default function FormularioEquipo({ equipo, onEquipoActualizado, onCerrar
       setFormData({
         nombre_equipo: equipo.nombre_equipo || '',
         color_uniforme: equipo.color_uniforme || '',
-        estado_equipo: equipo.estado_equipo || '',
         creado_por: equipo.creado_por || '',
         torneo: equipo.torneo ? equipo.torneo.id : '',
         imagen: null
@@ -63,7 +60,10 @@ export default function FormularioEquipo({ equipo, onEquipoActualizado, onCerrar
     e.preventDefault();
 
     const formDataToSend = new FormData();
-    Object.entries(formData).forEach(([key, value]) => {
+    Object.entries({
+      ...formData,
+      estado_equipo: 'Activo'  // ✅ Siempre enviamos "Activo"
+    }).forEach(([key, value]) => {
       if (value !== null && value !== '') {
         formDataToSend.append(key, value);
       }
@@ -97,7 +97,6 @@ export default function FormularioEquipo({ equipo, onEquipoActualizado, onCerrar
         });
         onEquipoActualizado && onEquipoActualizado();
       } else {
-        // ✅ Ajuste para mostrar errores aunque no sean arrays
         const errores = Object.entries(data)
           .map(([campo, mensajes]) => {
             if (Array.isArray(mensajes)) {
@@ -163,17 +162,8 @@ export default function FormularioEquipo({ equipo, onEquipoActualizado, onCerrar
           required
         />
 
-        <select
-          name="estado_equipo"
-          value={formData.estado_equipo}
-          onChange={handleChange}
-          required
-        >
-          <option value="">Seleccione estado del equipo</option>
-          {estados.map((estado) => (
-            <option key={estado} value={estado}>{estado}</option>
-          ))}
-        </select>
+        {/* estado_equipo ya no aparece en el formulario */}
+
 
         <input
           type="text"
@@ -188,7 +178,7 @@ export default function FormularioEquipo({ equipo, onEquipoActualizado, onCerrar
           name="torneo"
           value={formData.torneo}
           onChange={handleChange}
-          required={!equipo} // ✅ Solo requerido si es creación
+          required={!equipo}
         >
           <option value="">Seleccione torneo</option>
           {torneos.map((torneo) => (
@@ -238,3 +228,4 @@ export default function FormularioEquipo({ equipo, onEquipoActualizado, onCerrar
     </div>
   );
 }
+

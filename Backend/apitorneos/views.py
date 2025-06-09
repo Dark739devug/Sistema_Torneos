@@ -1,12 +1,33 @@
+
 from rest_framework import viewsets, permissions, filters, status
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework.parsers import MultiPartParser, FormParser
+from rest_framework import viewsets, permissions
+from rest_framework.decorators import action
+from rest_framework import status
 from rest_framework_simplejwt.views import TokenObtainPairView
 from django.contrib.auth.hashers import make_password
 from django.utils import timezone
 from django.db import OperationalError, connection
 from django.db.utils import OperationalError
+from django.utils import timezone
+
+
+from .models import ( Torneo, Grupo, AvanceFase, Jornada,
+                      Equipo, Cancha, Partido, Usuario,
+                     Inscripcion, Participante, Tarjeta, HistorialSuspension,
+                     Resultado, Goleador, TablaPosiciones, HistorialCambiosResultado)
+
+from .serializers import ( AvanceFaseSerializer, TorneoSerializer, GrupoSerializer,
+                          JornadaSerializer, 
+                           EquipoSerializer, CanchaSerializer,
+                           InscripcionSerializer, ParticipanteSerializer,
+                          TarjetaSerializer, HistorialCambiosResultado, ResultadoSerializer,
+                          GoleadorSerializer, HistorialSuspensionSerializer, TablaPosicionesSerializer, HistorialCambiosResultadoSerializer)
+    
+
+
 
 from .models import (
     Usuario, Torneo, Grupo, AvanceFase, Jornada, 
@@ -24,9 +45,10 @@ from .serializers import (
 )
 
 
+
+
 class CustomTokenObtainPairView(TokenObtainPairView):
     serializer_class = CustomTokenObtainPairSerializer
-
 
 class RegistroUsuarioAPIView(APIView):
     def post(self, request):
@@ -51,6 +73,104 @@ class RegistroUsuarioAPIView(APIView):
         return Response({'message': 'Usuario registrado exitosamente.'}, status=status.HTTP_201_CREATED)
 
 
+class ResultadoViewSet(viewsets.ModelViewSet):
+    queryset = Resultado.objects.all()
+    serializer_class = ResultadoSerializer
+    permission_classes = [permissions.AllowAny]
+
+
+    @action(detail=False, methods=['post'])
+    def registrar_resultado_completo(self, request):
+        data = request.data
+        partido_id = data.get('partido_id')
+        resultados = data.get('resultados')  
+        tarjetas = data.get('tarjetas') 
+        goleadores = data.get('goleadores')  
+
+        for r in resultados:
+            Resultado.objects.update_or_create(
+                partido_id=partido_id,
+                equipo_id=r['equipo_id'],
+                defaults={
+                    'goles_equipo': r['goles'],
+                    'tarjetas_amarillas': r.get('amarillas', 0),
+                    'tarjetas_rojas': r.get('rojas', 0),
+                    'puntos_equipo': r.get('puntos', 0),
+                    'tipo_resultado': r['tipo_resultado']
+                }
+            )
+
+        for g in goleadores:
+            Goleador.objects.create(
+                participante_id=g['participante_id'],
+                partido_id=partido_id,
+                goles=g['goles']
+            )
+
+        for tarjeta_data in tarjetas:
+            participante_id = tarjeta_data['participante_id']
+            
+            try:
+                participante = Participante.objects.get(id=participante_id)
+            except Participante.DoesNotExist:
+                return Response({"error": f"Participante con ID {participante_id} no existe."}, status=404)
+
+            Tarjeta.objects.create(
+                participante=participante,
+                partido_id=partido_id,
+                tipo=tarjeta_data['tipo']
+            )
+
+           
+            total_amarillas = Tarjeta.objects.filter(participante_id=participante_id, tipo='Amarilla').count()
+            total_rojas = Tarjeta.objects.filter(participante_id=participante_id, tipo='Roja').count()
+
+            if total_amarillas >= 4 or total_rojas >= 1:
+                HistorialSuspension.objects.create(
+                    participante=participante,
+                    fecha_suspension=timezone.now().date(),
+                    motivo='Suspensión automática por acumulación de tarjetas',
+                    estado_antes=participante.estado_activo,
+                    estado_despues=False
+                )
+                participante.estado_activo = False
+                participante.save()
+
+        self.actualizar_tabla_posiciones(partido_id)
+
+        return Response({'mensaje': 'Resultado, tarjetas y goleadores registrados correctamente.'}, status=status.HTTP_200_OK)
+    def actualizar_tabla_posiciones(self, partido_id):
+        partido = Partido.objects.get(id_partido=partido_id)  # ⚠️ Corrección aquí
+        torneo_id = partido.jornada.torneo.id
+
+        equipos = Equipo.objects.filter(torneo_id=torneo_id)
+
+        for equipo in equipos:
+            resultados = Resultado.objects.filter(partido__jornada__torneo_id=torneo_id, equipo=equipo)
+
+            pj = resultados.count()
+            ganados = resultados.filter(tipo_resultado='Ganado').count()
+            empatados = resultados.filter(tipo_resultado='Empatado').count()
+            perdidos = resultados.filter(tipo_resultado='Perdido').count()
+            gf = sum(r.goles_equipo for r in resultados)
+            gc = sum(Resultado.objects.filter(partido=r.partido).exclude(equipo=equipo).first().goles_equipo for r in resultados)
+            puntos = sum(r.puntos_equipo for r in resultados)
+
+            TablaPosiciones.objects.update_or_create(
+                torneo_id=torneo_id,
+                equipo=equipo,
+                defaults={
+                    'partidos_jugados': pj,
+                    'ganados': ganados,
+                    'empatados': empatados,
+                    'perdidos': perdidos,
+                    'goles_favor': gf,
+                    'goles_contra': gc,
+                    'puntos': puntos
+                }
+            )
+
+
 class TorneoViewSet(viewsets.ModelViewSet):
     queryset = Torneo.objects.all()
     serializer_class = TorneoSerializer
@@ -61,11 +181,9 @@ class TorneoViewSet(viewsets.ModelViewSet):
         serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         try:
-            # 🔹 Guardamos el torneo normalmente
+           
             self.perform_create(serializer)
-            id_torneo = serializer.instance.id  # ✅ Usamos 'id' en lugar de 'id_torneo'
-
-            # 🔹 Llamamos al procedimiento almacenado para crear los grupos automáticamente
+            id_torneo = serializer.instance.id 
             with connection.cursor() as cursor:
                 cursor.callproc('CrearGruposParaTorneoSeguro', [id_torneo])
 
@@ -121,8 +239,6 @@ class BasesTorneoViewSet(viewsets.ModelViewSet):
             self.perform_create(serializer)
             return Response(serializer.data, status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-
-
 
 class GrupoViewSet(viewsets.ModelViewSet):
     queryset = Grupo.objects.all()
@@ -191,10 +307,6 @@ class EquipoViewSet(viewsets.ModelViewSet):
         
 from rest_framework import generics
 from rest_framework.exceptions import ValidationError
-
-
-from rest_framework import generics
-from rest_framework.exceptions import ValidationError
 from .models import Equipo, Grupo, Torneo
 from .serializers import EquipoSerializer
 
@@ -215,12 +327,11 @@ class EquipoViewSet(viewsets.ModelViewSet):
         except Torneo.DoesNotExist:
             raise ValidationError({'torneo': 'Torneo no encontrado'})
 
-        # Verificar el máximo de equipos permitidos
         equipos_existentes = Equipo.objects.filter(torneo=torneo).count()
         if equipos_existentes >= torneo.maximo_equipos:
             raise ValidationError({'error': 'Se alcanzó el máximo de equipos permitidos para este torneo'})
 
-        # Asignar el grupo correspondiente
+       
         grupos = list(Grupo.objects.filter(torneo=torneo).order_by('id'))
         if not grupos:
             raise ValidationError({'error': 'No hay grupos definidos para este torneo'})
@@ -229,7 +340,7 @@ class EquipoViewSet(viewsets.ModelViewSet):
         grupo_asignado = grupos[grupo_index]
 
         serializer.save(
-            torneo=torneo,  # ✅ Asigna el torneo correctamente
+            torneo=torneo,  
             grupo=grupo_asignado,
             fecha_creacion=timezone.now(),
             fecha_modificacion=timezone.now()
@@ -254,12 +365,12 @@ class InscripcionViewSet(viewsets.ModelViewSet):
 
     def perform_create(self, serializer):
         equipo = serializer.validated_data.get('equipo')
-        # Verifica cuántas inscripciones existen para este equipo
+      
         inscripciones_count = Inscripcion.objects.filter(equipo=equipo).count()
         if inscripciones_count >= 2:
             raise ValidationError({'error': '❌ Este equipo ya tiene 2 inscripciones.'})
 
-        # Asigna automáticamente el estado y la fecha
+        
         serializer.save(
             estado='Pendiente',
             fecha_solicitud=timezone.now()
@@ -289,6 +400,17 @@ class ParticipanteViewSet(viewsets.ModelViewSet):
     serializer_class = ParticipanteSerializer
     permission_classes = [permissions.AllowAny]
 
+    fields = [
+            'id', 
+            'carnet', 
+            'nombre_estudiante', 
+            'apellido_estudiante', 
+            'carrera_estudiante', 
+            'semestre_estudiante', 
+            'estado_activo', 
+            'equipo'
+        ]
+
 class TarjetaViewSet(viewsets.ModelViewSet):
     queryset = Tarjeta.objects.all()
     serializer_class = TarjetaSerializer
@@ -297,11 +419,6 @@ class TarjetaViewSet(viewsets.ModelViewSet):
 class HistorialSuspensionViewSet(viewsets.ModelViewSet):
     queryset = HistorialSuspension.objects.all()
     serializer_class = HistorialSuspensionSerializer
-    permission_classes = [permissions.AllowAny]
-
-class ResultadoViewSet(viewsets.ModelViewSet):
-    queryset = Resultado.objects.all()
-    serializer_class = ResultadoSerializer
     permission_classes = [permissions.AllowAny]
 
 class GoleadorViewSet(viewsets.ModelViewSet):
@@ -339,7 +456,7 @@ def contar_partidos_necesarios(request):
         except Torneo.DoesNotExist:
             return JsonResponse({'error': 'Torneo no encontrado'}, status=404)
 
-        # Contar cuántos partidos se necesitan (lógica similar a la de crear_partidos_jornada)
+        
         grupos = Grupo.objects.filter(torneo=torneo)
         partidos_a_crear = []
         for grupo in grupos:
@@ -347,7 +464,7 @@ def contar_partidos_necesarios(request):
             if len(equipos) < 2:
                 continue
 
-            # Generar emparejamientos
+            
             n = len(equipos)
             if n % 2 != 0:
                 equipos.append(None)
@@ -363,7 +480,7 @@ def contar_partidos_necesarios(request):
                 emparejamientos.append(ronda)
                 equipos = [equipos[0]] + equipos[2:] + [equipos[1]]
 
-            # Aplanar y contar solo los partidos que aún no existen
+            
             partidos_planos = []
             for ronda in emparejamientos:
                 partidos_planos.extend(ronda)
@@ -530,7 +647,7 @@ def crear_partidos_jornada(request):
                     )
                     DisponibilidadCancha.objects.create(cancha=cancha, fecha=fecha, hora_inicio=slot["hora_inicio"], hora_fin=slot["hora_fin"], estado="Ocupado", partido=p)
                     creado.append({
-                        "id": p.id,
+                        "id": p.id_partido,
                         "equipos": f"{local.nombre_equipo} vs {visitante.nombre_equipo}",
                         "fecha": fecha.strftime("%Y-%m-%d"),
                         "hora": f"{slot['hora_inicio']} a {slot['hora_fin']}",
@@ -596,3 +713,52 @@ class PartidoViewSet(viewsets.ReadOnlyModelViewSet):
         return Response(serializer.data)
 
 
+class ParticipanteEstadoViewSet(viewsets.ModelViewSet):
+    queryset = Participante.objects.all()
+    serializer_class = ParticipanteSerializer
+    permission_classes = [permissions.AllowAny]
+
+    @action(detail=True, methods=['patch'])
+    def actualizar_estado(self, request, pk=None):
+        participante = self.get_object()
+        data = request.data
+
+        estado = data.get("estado_activo", None)
+
+        if estado is None:
+            return Response({"error": "El campo 'estado_activo' es requerido."}, status=status.HTTP_400_BAD_REQUEST)
+
+        if isinstance(estado, (bytes, bytearray)):
+            estado = estado == b'\x01'
+        elif isinstance(estado, str):
+            estado = estado.lower() in ("true", "1", "t", "yes", "si")
+        else:
+            estado = bool(estado)
+
+        participante.estado_activo = estado
+        participante.save()
+
+        return Response({"mensaje": "Estado del participante actualizado correctamente."}, status=status.HTTP_200_OK)
+    
+    
+@csrf_exempt
+def aprobar_inscripcion(request):
+    if request.method == 'POST':
+        try:
+            data = json.loads(request.body)
+            id_inscripcion = data.get('id_inscripcion')
+            nuevo_estado = data.get('nuevo_estado')
+
+            if not id_inscripcion or not nuevo_estado:
+                return JsonResponse({'error': 'Datos incompletos'}, status=400)
+
+            with connection.cursor() as cursor:
+                cursor.execute("CALL CambiarEstadoInscripcion(%s, %s)", [id_inscripcion, nuevo_estado])
+
+            return JsonResponse({'mensaje': 'Estado cambiado correctamente'}, status=200)
+
+        except Exception as e:
+            return JsonResponse({'error': str(e)}, status=500)
+
+   
+    return JsonResponse({'error': 'Método no permitido'}, status=405)

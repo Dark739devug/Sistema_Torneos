@@ -42,19 +42,19 @@ export default function FormularioTorneo({ torneo, onTorneoActualizado, onCerrar
     const { name, value, type, files } = e.target;
 
     if (name === "maximo_equipos") {
-      // Permitir vacío o solo números pares positivos
-      if (value === "" || (parseInt(value, 10) % 2 === 0 && parseInt(value, 10) > 0)) {
-        setFormData({
-          ...formData,
-          [name]: value
-        });
-      } else {
-        // Feedback visual
-        toast.warning('Por favor, ingrese solo números pares mayores a 0.', {
+      const parsedValue = parseInt(value, 10);
+
+      if (!isNaN(parsedValue) && (parsedValue % 2 !== 0 || parsedValue <= 0)) {
+        toast.warning('Se sugiere usar solo números pares mayores a 0.', {
           position: 'top-center',
           autoClose: 2000
         });
       }
+
+      setFormData({
+        ...formData,
+        [name]: value
+      });
     } else {
       setFormData({
         ...formData,
@@ -151,7 +151,6 @@ export default function FormularioTorneo({ torneo, onTorneoActualizado, onCerrar
 
         <textarea name="descripcion_torneo" placeholder="Descripción" value={formData.descripcion_torneo} onChange={handleChange} rows={3} required />
 
-        {/* Input de número con validación */}
         <input
           type="number"
           name="maximo_equipos"

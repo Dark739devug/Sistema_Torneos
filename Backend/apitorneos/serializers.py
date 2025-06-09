@@ -6,13 +6,7 @@ from .models import (Usuario, Torneo,AvanceFase, Grupo, Jornada,
                     , BasesTorneo, DisponibilidadCancha )
                      
 from rest_framework import serializers
-
 from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
-
-
-
-    
-
 from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
 from rest_framework import serializers
 
@@ -129,10 +123,6 @@ class InscripcionSerializer(serializers.ModelSerializer):
         model = Inscripcion
         fields = '__all__'
 
-class ParticipanteSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = Participante
-        fields = '__all__'
 
 class TarjetaSerializer(serializers.ModelSerializer):
     class Meta:
@@ -150,9 +140,16 @@ class ResultadoSerializer(serializers.ModelSerializer):
         fields = '__all__'
 
 class GoleadorSerializer(serializers.ModelSerializer):
+    participante_carnet = serializers.CharField(source='participante.carnet', read_only=True)
+    participante_nombre = serializers.CharField(source='participante.nombre', read_only=True)
+    equipo_nombre = serializers.CharField(source='participante.equipo.nombre', read_only=True)
+
     class Meta:
         model = Goleador
-        fields = '__all__'
+        fields = [
+            'id', 'participante', 'participante_carnet', 'participante_nombre',
+            'goles', 'equipo_nombre'
+        ]
 
 class TablaPosicionesSerializer(serializers.ModelSerializer):
     class Meta:
@@ -173,3 +170,17 @@ class DiaSerializer(serializers.Serializer):
 class GenerarPartidosSerializer(serializers.Serializer):
     torneo = serializers.IntegerField(required=True)
     dias = DiaSerializer(many=True, required=True)
+
+class ParticipanteSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Participante
+        fields = [
+            'id',
+            'carnet',
+            'nombre_estudiante',
+            'apellido_estudiante',
+            'carrera_estudiante',
+            'semestre_estudiante',
+            'estado_activo',
+            'equipo'
+        ]

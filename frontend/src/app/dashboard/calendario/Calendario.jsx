@@ -16,7 +16,7 @@ export default function Calendario() {
   }, []);
 
   const generarPDF = async () => {
-    // ✅ Importa html2pdf dinámicamente para evitar el error en SSR
+  
     const html2pdf = (await import("html2pdf.js")).default;
     const element = document.getElementById("calendario-html");
     const opciones = {
@@ -40,7 +40,7 @@ export default function Calendario() {
           borderRadius: "8px",
         }}
       >
-        {/* Encabezado con logos */}
+        
         <div
           style={{
             display: "flex",
@@ -104,7 +104,7 @@ export default function Calendario() {
           </tbody>
         </table>
 
-        {/* Pie de página: fuera de la tabla */}
+       
         <div
           style={{
             borderTop: "1px solid #ccc",

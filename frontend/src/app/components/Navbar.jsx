@@ -22,9 +22,9 @@ const Navbar = () => {
   return (
     <nav className="navbar">
       <div className="navbar-container">
-        <img src="/logoumes.png" width="70" height={70} />
+        <img src="/logoumes.png" width="80"  />
 
-        <img src="Ligapro.png" alt="ligapro" width="180" />
+        <img src="Ligapro.png" alt="ligapro" width="195" />
         {!isLoggedIn && (
           <div className="navbar-links">
             <Link href="/" className="nav-link">

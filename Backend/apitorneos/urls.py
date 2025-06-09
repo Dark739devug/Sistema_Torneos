@@ -2,7 +2,7 @@ from rest_framework.routers import DefaultRouter
 from django.urls import path, include
 from rest_framework_simplejwt.views import TokenRefreshView
 from .views import RegistroUsuarioAPIView, CustomTokenObtainPairView, contar_partidos_necesarios
-from .views import ( CustomTokenObtainPairView, crear_partidos_jornada, generar_jornadas,  PartidoViewSet, 
+from .views import ( CustomTokenObtainPairView, crear_partidos_jornada, generar_jornadas,  PartidoViewSet, aprobar_inscripcion,
    
     TorneoViewSet,BasesTorneoViewSet,
     AvanceFaseViewSet,
@@ -18,8 +18,7 @@ from .views import ( CustomTokenObtainPairView, crear_partidos_jornada, generar_
     GoleadorViewSet,
     TablaPosicionesViewSet,
     HistorialCambiosResultadoViewSet,
-   
-    
+    ParticipanteEstadoViewSet,
 )
 
 router = DefaultRouter()
@@ -39,6 +38,7 @@ router.register('tabla-posiciones', TablaPosicionesViewSet)
 router.register('historial-cambios-resultado', HistorialCambiosResultadoViewSet)
 router.register('bases_torneo', BasesTorneoViewSet, basename='bases_torneo')
 router.register('partidos', PartidoViewSet, basename='partidos')
+router.register(r'participantes-estado', ParticipanteEstadoViewSet, basename='participante-estado')
 
 
 urlpatterns = [
@@ -49,6 +49,9 @@ urlpatterns = [
     path('crear-partidos/', crear_partidos_jornada, name='crear_partidos_jornada'),
     path('generar-jornadas/', generar_jornadas, name='generar_jornadas'),
     path('contar-partidos-necesarios/', contar_partidos_necesarios, name='contar_partidos_necesarios'),
+    
+    path('aprobar-inscripcion/', aprobar_inscripcion, name='aprobar-inscripcion'),
+
     
     
 
