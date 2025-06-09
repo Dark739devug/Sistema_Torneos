@@ -1,16 +1,21 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { FaTrophy, FaUsers, FaCalendarAlt, FaEdit, FaTrash, FaSearch, FaPlus } from 'react-icons/fa';
+import { FaTrophy, FaUsers, FaCalendarAlt, FaEdit, FaTrash, FaSearch, FaPlus, FaFutbol } from 'react-icons/fa';
 import { toast } from 'react-toastify';
 
 import FormularioBases from './FormularioBases';
+import GenerarPartidosForm from "./GenerarPartidosForm";
+import GenerarJornadasForm from "./GenerarJornadasForm";
 
 export default function ListaTorneos({ recargar, onEditar }) {
   const [torneos, setTorneos] = useState([]);
   const [query, setQuery] = useState('');
   const [torneoIdSeleccionado, setTorneoIdSeleccionado] = useState(null);
   const [baseAEditar, setBaseAEditar] = useState(null);
+
+  const [torneoIdFormularioPartidos, setTorneoIdFormularioPartidos] = useState(null);
+  const [torneoIdFormularioJornadas, setTorneoIdFormularioJornadas] = useState(null);
 
   const cargarTorneos = async () => {
     try {
@@ -19,11 +24,11 @@ export default function ListaTorneos({ recargar, onEditar }) {
         const data = await response.json();
         setTorneos(data);
       } else {
-        toast.error('❌ Error al obtener la lista de torneos.');
+        toast.error(' Error al obtener la lista de torneos.');
       }
     } catch (error) {
-      console.error('❌ Error:', error);
-      toast.error('❌ Error: ' + error.message);
+      console.error(' Error:', error);
+      toast.error(' Error: ' + error.message);
     }
   };
 
@@ -35,13 +40,13 @@ export default function ListaTorneos({ recargar, onEditar }) {
       });
       if (response.ok) {
         setTorneos((prev) => prev.filter((t) => t.id !== id));
-        toast.success('✅ Torneo eliminado correctamente.');
+        toast.success(' Torneo eliminado correctamente.');
       } else {
         const data = await response.json();
-        toast.error(data.error || '❌ Error al eliminar el torneo.');
+        toast.error(data.error || ' Error al eliminar el torneo.');
       }
     } catch (error) {
-      toast.error('❌ Error: ' + error.message);
+      toast.error(' Error: ' + error.message);
     }
   };
 
@@ -59,6 +64,12 @@ export default function ListaTorneos({ recargar, onEditar }) {
     setBaseAEditar(base);
     setTorneoIdSeleccionado(idTorneo);
   };
+
+  const abrirFormularioPartidos = (idTorneo) => setTorneoIdFormularioPartidos(idTorneo);
+  const cerrarFormularioPartidos = () => setTorneoIdFormularioPartidos(null);
+
+  const abrirFormularioJornadas = (idTorneo) => setTorneoIdFormularioJornadas(idTorneo);
+  const cerrarFormularioJornadas = () => setTorneoIdFormularioJornadas(null);
 
   useEffect(() => {
     cargarTorneos();
@@ -93,11 +104,7 @@ export default function ListaTorneos({ recargar, onEditar }) {
                   <img
                     src={torneo.imagen}
                     alt="Logo"
-                    style={{  width: '200px',
-                      height: '200px',
-                      objectFit: 'cover',
-                      borderRadius: '4px'
-                     }}
+                    style={{ width: '200px', height: '200px', objectFit: 'cover', borderRadius: '4px' }}
                   />
                 </div>
               )}
@@ -127,6 +134,32 @@ export default function ListaTorneos({ recargar, onEditar }) {
                   </button>
                   <button onClick={() => toggleFormularioBases(torneo.id)} style={{ color: '#28a745' }}>
                     <FaPlus /> Agregar Base
+                  </button>
+                  <button
+                    onClick={() => abrirFormularioPartidos(torneo.id)}
+                    style={{
+                      background: '#0070f3',
+                      color: '#fff',
+                      padding: '0.3rem 0.7rem',
+                      borderRadius: '4px',
+                      border: 'none',
+                      cursor: 'pointer'
+                    }}
+                  >
+                    <FaFutbol /> Generar Partidos
+                  </button>
+                  <button
+                    onClick={() => abrirFormularioJornadas(torneo.id)}
+                    style={{
+                      background: '#6f42c1',
+                      color: '#fff',
+                      padding: '0.3rem 0.7rem',
+                      borderRadius: '4px',
+                      border: 'none',
+                      cursor: 'pointer'
+                    }}
+                  >
+                    <FaCalendarAlt /> Generar Jornadas
                   </button>
                 </div>
               </div>
@@ -175,6 +208,27 @@ export default function ListaTorneos({ recargar, onEditar }) {
                 }}
                 onCancelarEdicion={() => setBaseAEditar(null)}
               />
+            )}
+
+            {torneoIdFormularioPartidos === torneo.id && (
+              <div className="border p-4 rounded shadow bg-white mt-4">
+                <GenerarPartidosForm
+                  onClose={cerrarFormularioPartidos}
+                  idTorneo={torneo.id}
+                  nombreTorneo={torneo.nombre_torneo}
+                />
+              </div>
+            )}
+
+            {torneoIdFormularioJornadas === torneo.id && (
+              <div className="border p-4 rounded shadow bg-white mt-4">
+                <GenerarJornadasForm
+                  onClose={cerrarFormularioJornadas}
+                  idTorneo={torneo.id}
+                  nombreTorneo={torneo.nombre_torneo}
+                  onGenerado={cargarTorneos}
+                />
+              </div>
             )}
           </li>
         ))}

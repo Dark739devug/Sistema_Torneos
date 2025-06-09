@@ -1,9 +1,9 @@
 
-from .models import (Usuario, Torneo,AvanceFase, Grupo, Jornada, Calendario, Horario,
-                    CalendarioHorario, Equipo, Cancha, Partido,
+from .models import (Usuario, Torneo,AvanceFase, Grupo, Jornada,
+                    Equipo, Cancha, Partido,
                     Inscripcion, Participante, Tarjeta, HistorialSuspension,
                         Resultado, Goleador, TablaPosiciones, HistorialCambiosResultado
-                    , BasesTorneo)
+                    , BasesTorneo, DisponibilidadCancha )
                      
 from rest_framework import serializers
 
@@ -70,20 +70,7 @@ class JornadaSerializer(serializers.ModelSerializer):
         model = Jornada
         fields = '__all__'
 
-class CalendarioSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = Calendario
-        fields = '__all__'
 
-class HorarioSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = Horario
-        fields = '__all__'
-
-class CalendarioHorarioSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = CalendarioHorario
-        fields = '__all__'
 
 class EquipoSerializer(serializers.ModelSerializer):
     grupo = GrupoSerializer(read_only=True)
@@ -101,10 +88,39 @@ class CanchaSerializer(serializers.ModelSerializer):
         model = Cancha
         fields = '__all__'
 
-class PartidoSerializer(serializers.ModelSerializer):
+class PartidoDetalleSerializer(serializers.ModelSerializer):
+    enfrentamiento = serializers.SerializerMethodField()
+    equipo_local_nombre = serializers.CharField(source='equipo_local.nombre_equipo', read_only=True)
+    equipo_visitante_nombre = serializers.CharField(source='equipo_visitante.nombre_equipo', read_only=True)
+    cancha_nombre = serializers.CharField(source='cancha.nombre_cancha', read_only=True)
+    hora_inicio_ampm = serializers.SerializerMethodField()
+    hora_fin_ampm = serializers.SerializerMethodField()
+
     class Meta:
         model = Partido
+        fields = [
+            'id_partido', 'cancha', 'cancha_nombre', 'fecha_partido', 'jornada',
+            'equipo_local', 'equipo_local_nombre', 'equipo_visitante', 'equipo_visitante_nombre',
+            'fecha_creacion', 'fecha_modificacion', 'creado_por', 'estado',  'enfrentamiento',  
+            'hora_inicio_ampm', 
+            'hora_fin_ampm',
+             
+
+        ]
+    def get_enfrentamiento(self, obj):
+        return f"{obj.equipo_local} vs {obj.equipo_visitante}"
+    
+    def get_hora_inicio_ampm(self, obj):
+        return obj.hora_inicio.strftime("%I:%M %p") if obj.hora_inicio else ""
+
+    def get_hora_fin_ampm(self, obj):
+        return obj.hora_fin.strftime("%I:%M %p") if obj.hora_fin else ""
+
+class DisponibilidadCanchaSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = DisponibilidadCancha
         fields = '__all__'
+
 
 class InscripcionSerializer(serializers.ModelSerializer):
     estado = serializers.CharField(read_only=True)
@@ -147,3 +163,13 @@ class HistorialCambiosResultadoSerializer(serializers.ModelSerializer):
     class Meta:
         model = HistorialCambiosResultado
         fields = '__all__'
+
+
+class DiaSerializer(serializers.Serializer):
+    dia = serializers.CharField(required=True)
+    hora_inicio = serializers.CharField(required=True)
+    hora_fin = serializers.CharField(required=True)
+
+class GenerarPartidosSerializer(serializers.Serializer):
+    torneo = serializers.IntegerField(required=True)
+    dias = DiaSerializer(many=True, required=True)

@@ -40,10 +40,27 @@ export default function FormularioTorneo({ torneo, onTorneoActualizado, onCerrar
 
   const handleChange = (e) => {
     const { name, value, type, files } = e.target;
-    setFormData({
-      ...formData,
-      [name]: type === 'file' ? files[0] : value
-    });
+
+    if (name === "maximo_equipos") {
+      // Permitir vacío o solo números pares positivos
+      if (value === "" || (parseInt(value, 10) % 2 === 0 && parseInt(value, 10) > 0)) {
+        setFormData({
+          ...formData,
+          [name]: value
+        });
+      } else {
+        // Feedback visual
+        toast.warning('Por favor, ingrese solo números pares mayores a 0.', {
+          position: 'top-center',
+          autoClose: 2000
+        });
+      }
+    } else {
+      setFormData({
+        ...formData,
+        [name]: type === 'file' ? files[0] : value
+      });
+    }
   };
 
   const handleSubmit = async (e) => {
@@ -77,19 +94,19 @@ export default function FormularioTorneo({ torneo, onTorneoActualizado, onCerrar
       console.log('Respuesta del backend:', data);
 
       if (response.ok) {
-        toast.success(data.mensaje || data.message || ' Operación exitosa.', {
+        toast.success(data.mensaje || data.message || 'Operación exitosa.', {
           position: 'top-center',
           autoClose: 3000
         });
         onTorneoActualizado && onTorneoActualizado();
       } else {
-        toast.error(data.error || data.detail || ' Ocurrió un error inesperado.', {
+        toast.error(data.error || data.detail || 'Ocurrió un error inesperado.', {
           position: 'top-center',
           autoClose: 5000
         });
       }
     } catch (error) {
-      toast.error(' Error en la petición: ' + error.message, {
+      toast.error('Error en la petición: ' + error.message, {
         position: 'top-center',
         autoClose: 5000
       });
@@ -116,7 +133,7 @@ export default function FormularioTorneo({ torneo, onTorneoActualizado, onCerrar
 
       <form
         onSubmit={handleSubmit}
-        style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }} // Aumentado gap aquí
+        style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}
       >
         <h2 style={{ textAlign: 'center' }}>{torneo ? 'Editar Torneo' : 'Crear Torneo'}</h2>
 
@@ -134,9 +151,24 @@ export default function FormularioTorneo({ torneo, onTorneoActualizado, onCerrar
 
         <textarea name="descripcion_torneo" placeholder="Descripción" value={formData.descripcion_torneo} onChange={handleChange} rows={3} required />
 
-        <input type="number" name="maximo_equipos" placeholder="Máximo de equipos" value={formData.maximo_equipos} onChange={handleChange} required />
+        {/* Input de número con validación */}
+        <input
+          type="number"
+          name="maximo_equipos"
+          placeholder="Máximo de equipos (números pares)"
+          value={formData.maximo_equipos}
+          onChange={handleChange}
+          required
+        />
 
-        <input type="number" name="numero_grupos" placeholder="Número de grupos" value={formData.numero_grupos} onChange={handleChange} required />
+        <input
+          type="number"
+          name="numero_grupos"
+          placeholder="Número de grupos"
+          value={formData.numero_grupos}
+          onChange={handleChange}
+          required
+        />
 
         <select name="fase_actual" value={formData.fase_actual} onChange={handleChange} required>
           <option value="">Seleccione la fase actual</option>

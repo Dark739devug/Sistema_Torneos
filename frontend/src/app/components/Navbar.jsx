@@ -24,9 +24,7 @@ const Navbar = () => {
       <div className="navbar-container">
         <img src="/logoumes.png" width="70" height={70} />
 
-       <img src="/Ligapro.png" width="160" height={80} className="logo" />  
-
-        {/* Solo se muestran los links si no está logeado */}
+        <img src="Ligapro.png" alt="ligapro" width="180" />
         {!isLoggedIn && (
           <div className="navbar-links">
             <Link href="/" className="nav-link">

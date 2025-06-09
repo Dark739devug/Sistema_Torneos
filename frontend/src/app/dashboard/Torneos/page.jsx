@@ -43,6 +43,7 @@ export default function CampeonatosPage() {
         >
           Nuevo Torneo
         </button>
+        
 
         <ListaTorneos recargar={recargar} onEditar={abrirModalEdicion} />
 

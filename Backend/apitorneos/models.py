@@ -1,6 +1,8 @@
 from django.db import models
 
 from django.contrib.auth.models import BaseUserManager
+from django.utils import timezone
+
 
 class UsuarioManager(BaseUserManager):
     def create_user(self, correo, nombre, password=None, nombre_rol='Estudiante'):
@@ -59,6 +61,8 @@ class Usuario(AbstractBaseUser, PermissionsMixin):
     class Meta:
         db_table = 'Usuario'
 
+
+
 FASES = [
     ('Fase de grupos', 'Fase de grupos'),
     ('Semifinal', 'Semifinal'),
@@ -87,9 +91,6 @@ class Torneo(models.Model):
         db_table = 'Torneo'
         managed = False
 
-from django.db import models
-
-from django.db import models
 
 class BasesTorneo(models.Model):
     id = models.AutoField(db_column='ID_Base', primary_key=True)
@@ -139,45 +140,56 @@ class Jornada(models.Model):
         managed = False
 
 
-class Calendario(models.Model):
-    id = models.AutoField(db_column='ID_Calendario', primary_key=True)
-    fecha = models.DateField(db_column='Fecha')
-    dia_semana = models.CharField(db_column='Dia_Semana', max_length=10)
-    jornada = models.ForeignKey(Jornada, db_column='ID_Jornada', on_delete=models.CASCADE)
-
-    class Meta:
-        db_table = 'Calendario'
-        managed = False
-
-
-class Horario(models.Model):
-    id = models.AutoField(db_column='ID_Horario', primary_key=True)
-    hora_inicio = models.TimeField(db_column='Hora_Inicio')
-    hora_fin = models.TimeField(db_column='Hora_Fin')
-
-    class Meta:
-        db_table = 'Horario'
-        managed = False
-
-
-class CalendarioHorario(models.Model):
-    id = models.AutoField(db_column='ID_Calendario_Horario', primary_key=True)
-    calendario = models.ForeignKey(Calendario, db_column='ID_Calendario', on_delete=models.CASCADE)
-    horario = models.ForeignKey(Horario, db_column='ID_Horario', on_delete=models.CASCADE)
-
-    class Meta:
-        db_table = 'Calendario_Horario'
-        managed = False
-
-
 class Cancha(models.Model):
     id = models.AutoField(db_column='ID_Cancha', primary_key=True)
     nombre_cancha = models.CharField(db_column='Nombre_Cancha', max_length=50)
-    estado_cancha = models.CharField(db_column='Estado_Cancha', max_length=20, default='Desocupado')
+    
 
     class Meta:
         db_table = 'Canchas'
         managed = False
+
+
+class Partido(models.Model):
+    ESTADO_CHOICES = [
+        ('Programado', 'Programado'),
+        ('Jugado', 'Jugado'),
+        ('Aplazado', 'Aplazado'),
+    ]
+
+    id_partido = models.AutoField(db_column='ID_Partidos', primary_key=True)
+    cancha = models.ForeignKey(Cancha, on_delete=models.CASCADE, db_column='ID_Cancha')
+    hora_inicio = models.TimeField(db_column='Hora_Inicio')
+    hora_fin = models.TimeField(db_column='Hora_Fin')
+    fecha_partido = models.DateField(db_column='Fecha_Partido')
+    jornada = models.ForeignKey('Jornada', on_delete=models.CASCADE, db_column='ID_Jornada', related_name='partidos')
+    equipo_local = models.ForeignKey('Equipo', on_delete=models.CASCADE, db_column='Equipo_Local', related_name='partidos_como_local')
+    equipo_visitante = models.ForeignKey('Equipo', on_delete=models.CASCADE, db_column='Equipo_Visitante', related_name='partidos_como_visitante')
+    fecha_creacion = models.DateTimeField(default=timezone.now, db_column='Fecha_Creacion')
+    fecha_modificacion = models.DateTimeField(auto_now=True, db_column='Fecha_Modificacion')
+    creado_por = models.CharField(max_length=50, blank=True, null=True, db_column='Creado_Por')
+    estado = models.CharField(max_length=20, choices=ESTADO_CHOICES, default='Programado', db_column='Estado')
+
+    class Meta:
+        db_table = 'Partido' 
+        managed = False
+
+    def __str__(self):
+        return f"{self.equipo_local} vs {self.equipo_visitante} ({self.fecha_partido})"
+
+
+class DisponibilidadCancha(models.Model):
+    id = models.AutoField(db_column='ID_Disponibilidad', primary_key=True)
+    cancha = models.ForeignKey(Cancha, on_delete=models.CASCADE, db_column='ID_Cancha')
+    fecha = models.DateField(db_column='Fecha')
+    hora_inicio = models.TimeField(db_column='Hora_Inicio')
+    hora_fin = models.TimeField(db_column='Hora_Fin')
+    estado = models.CharField(max_length=20, db_column='Estado')
+    partido = models.ForeignKey('Partido', on_delete=models.CASCADE, db_column='ID_Partidos', null=True, blank=True)
+
+    class Meta:
+            db_table = 'DisponibilidadCancha'
+            managed = False
 
 
 class Equipo(models.Model):
@@ -195,23 +207,10 @@ class Equipo(models.Model):
     class Meta:
         db_table = 'Equipo'
         managed = False
+    
+    def __str__(self):
+        return self.nombre_equipo
         
-class Partido(models.Model):
-    id = models.AutoField(db_column='ID_Partidos', primary_key=True)
-    cancha = models.ForeignKey('Cancha', db_column='ID_Cancha', null=True, on_delete=models.SET_NULL)
-    fecha_partido = models.DateField(db_column='Fecha_Partido')
-    jornada = models.ForeignKey('Jornada', db_column='ID_Jornada', on_delete=models.CASCADE)
-    calendario = models.ForeignKey('Calendario', db_column='ID_Calendario', on_delete=models.CASCADE)
-    horario = models.ForeignKey('Horario', db_column='ID_Horario', on_delete=models.CASCADE)
-    equipo_local = models.ForeignKey('Equipo', db_column='Equipo_Local', related_name='equipo_local', on_delete=models.CASCADE)
-    equipo_visitante = models.ForeignKey('Equipo', db_column='Equipo_Visitante', related_name='equipo_visitante', on_delete=models.CASCADE)
-    fecha_creacion = models.DateTimeField(db_column='Fecha_Creacion')
-    fecha_modificacion = models.DateTimeField(db_column='Fecha_Modificacion')
-    creado_por = models.CharField(db_column='Creado_Por', max_length=50)
-
-    class Meta:
-        db_table = 'Partido'
-        managed = False
 
 
 class Inscripcion(models.Model):
